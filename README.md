@@ -2,12 +2,10 @@
 
 🧰 A collection of scripts and function apps for Microsoft Intune automation and management.
 
-## 📂 Folder Structure
-
-```
-intune-tools/
+## 📂 Folder Structureintune-tools/
 │
 ├── scripts/
+│   ├── Add-AutopilotCorporateIdentifiers.ps1
 │   ├── Add-MgDevicesWithAppToGroup.ps1
 │   ├── Check-Intune-Enrollment.ps1
 │   └── Update-Group.ps1
@@ -17,9 +15,10 @@ intune-tools/
         ├── host.json
         ├── requirements.psd1
         └── run.ps1
-```
-
 ## 🚀 Tools
+
+### [Add-AutopilotCorporateIdentifiers.ps1](./scripts/Add-AutopilotCorporateIdentifiers.ps1)
+**Windows Autopilot Device Preparation Migration Tool** - Migrates devices from traditional Windows Autopilot to Windows Autopilot device preparation. Features include device filtering, duplicate detection, optional source cleanup, and comprehensive migration tracking.
 
 ### [Add-MgDevicesWithAppToGroup.ps1](./scripts/Add-MgDevicesWithAppToGroup.ps1)
 Adds devices associated with an Intune-managed app to an Azure AD group using Microsoft Graph.
@@ -28,7 +27,7 @@ Adds devices associated with an Intune-managed app to an Azure AD group using Mi
 Checks if users in a group have their devices enrolled in Intune.
 
 ### [Update-Group.ps1](./scripts/Update-Group.ps1)
-Updates an Azure AD group’s membership by adding or removing device IDs.
+Updates an Azure AD group's membership by adding or removing device IDs.
 
 ### [App Dependency Manager](./function-apps/app-dependency-manager/)
 An Azure Function App that manages app dependencies for Intune deployments.
