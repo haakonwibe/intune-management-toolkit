@@ -24,13 +24,13 @@
 
 .NOTES
     File Name      : Add-AutopilotCorporateIdentifiers.ps1
-    Author         : Generated for Intune Tools
+    Author         : Haakon Wibe
     Prerequisite   : Microsoft Graph PowerShell SDK
-    Copyright      : (c) 2024. All rights reserved.
+    Copyright      : (c) 2025 Haakon Wibe. All rights reserved.
     License        : MIT
     Version        : 4.1
-    Creation Date  : 2024-12-19
-    Last Modified  : 2024-12-19
+    Creation Date  : 2025-08-05
+    Last Modified  : 2025-08-05
 
 .EXAMPLE
     .\Add-AutopilotCorporateIdentifiers.ps1
@@ -73,7 +73,7 @@ Write-Host "=== Windows Autopilot Device Preparation Migration Tool ===" -Foregr
 Write-Host "This script migrates Autopilot devices to Windows Autopilot device preparation." -ForegroundColor Yellow
 
 if ($DeleteFromSource) {
-    Write-Host "??  WARNING: Devices will be DELETED from source Autopilot inventory after successful migration!" -ForegroundColor Red
+    Write-Host "⚠️  WARNING: Devices will be DELETED from source Autopilot inventory after successful migration!" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -157,10 +157,10 @@ function Add-DeviceIdentifier {
         
         $response = Invoke-MgGraphRequest -Uri $uri -Method POST -Body $requestBody -ContentType "application/json"
         
-        Write-Host "  ? Successfully added device identifier for: $SerialNumber" -ForegroundColor Green
+        Write-Host "  ✓ Successfully added device identifier for: $SerialNumber" -ForegroundColor Green
         return $true
     } catch {
-        Write-Host "  ? Failed to add device identifier for $SerialNumber : $_" -ForegroundColor Red
+        Write-Host "  ✗ Failed to add device identifier for $SerialNumber : $_" -ForegroundColor Red
         return $false
     }
 }
@@ -186,10 +186,10 @@ function Remove-AutopilotDevice {
         
         Invoke-MgGraphRequest -Uri $uri -Method DELETE
         
-        Write-Host "  ??? Successfully deleted device from Autopilot: $SerialNumber" -ForegroundColor Green
+        Write-Host "  🗑️ Successfully deleted device from Autopilot: $SerialNumber" -ForegroundColor Green
         return $true
     } catch {
-        Write-Host "  ? Failed to delete device from Autopilot $SerialNumber : $_" -ForegroundColor Red
+        Write-Host "  ✗ Failed to delete device from Autopilot $SerialNumber : $_" -ForegroundColor Red
         return $false
     }
 }
@@ -272,18 +272,18 @@ try {
         $serialNumber = $device.SerialNumber
         
         if ([string]::IsNullOrEmpty($serialNumber)) {
-            Write-Host "  ?? Skipping device with empty serial number" -ForegroundColor Yellow
+            Write-Host "  ⚠️ Skipping device with empty serial number" -ForegroundColor Yellow
             continue
         }
         
-        Write-Host "  ? Using: Manufacturer='$manufacturer', Model='$model', Serial='$serialNumber'" -ForegroundColor Cyan
+        Write-Host "  → Using: Manufacturer='$manufacturer', Model='$model', Serial='$serialNumber'" -ForegroundColor Cyan
         
         # Check if device identifier already exists (skip in dry run mode)
         $deviceExists = $false
         if (-not $DryRun) {
             $deviceExists = Test-DeviceIdentifierExists -Manufacturer $manufacturer -Model $model -SerialNumber $serialNumber
             if ($deviceExists) {
-                Write-Host "  ?? Device identifier already exists in Autopilot device preparation: $serialNumber" -ForegroundColor Cyan
+                Write-Host "  ℹ️ Device identifier already exists in Autopilot device preparation: $serialNumber" -ForegroundColor Cyan
                 $alreadyExistsCount++
             }
         }
@@ -303,7 +303,7 @@ try {
         
         # Delete from source Autopilot if requested and migration was successful
         if ($DeleteFromSource -and $migrationSuccessful) {
-            Write-Host "  ? Deleting from source Autopilot inventory..." -ForegroundColor Yellow
+            Write-Host "  → Deleting from source Autopilot inventory..." -ForegroundColor Yellow
             if (Remove-AutopilotDevice -DeviceId $device.Id -SerialNumber $serialNumber -DryRun:$DryRun) {
                 $deletedCount++
             } else {

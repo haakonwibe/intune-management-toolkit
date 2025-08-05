@@ -1,12 +1,12 @@
 # Add-AutopilotCorporateIdentifiers.ps1
 
-?? **Windows Autopilot Device Preparation Migration Tool**
+🔧 **Windows Autopilot Device Preparation Migration Tool**
 
-## ?? Overview
+## 📋 Overview
 
 This PowerShell script migrates devices from traditional Windows Autopilot to Windows Autopilot device preparation. It retrieves devices from your Autopilot inventory and adds them as imported device identifiers to enable the new device preparation workflow. The script provides comprehensive migration capabilities with safety features and optional source cleanup.
 
-## ?? Purpose
+## 🎯 Purpose
 
 - **Direct Migration**: Seamlessly migrate devices from Autopilot to device preparation
 - **Safety Features**: Dry run mode and duplicate detection
@@ -14,18 +14,18 @@ This PowerShell script migrates devices from traditional Windows Autopilot to Wi
 - **Source Cleanup**: Optional deletion from source Autopilot inventory
 - **Connection Management**: Persistent Graph connections with optional disconnect
 
-## ?? Features
+## 🚀 Features
 
-- ? Retrieves all Windows Autopilot devices from your inventory
-- ? Adds devices as imported identifiers for device preparation
-- ? Filters devices by manufacturer and/or model
-- ? Detects and handles existing device identifiers
-- ? Optional deletion from source Autopilot inventory
-- ? Comprehensive error handling and progress tracking
-- ? Dry run mode for safe testing
-- ? Connection management with optional disconnect
+- ✅ Retrieves all Windows Autopilot devices from your inventory
+- ✅ Adds devices as imported identifiers for device preparation
+- ✅ Filters devices by manufacturer and/or model
+- ✅ Detects and handles existing device identifiers
+- ✅ Optional deletion from source Autopilot inventory
+- ✅ Comprehensive error handling and progress tracking
+- ✅ Dry run mode for safe testing
+- ✅ Connection management with optional disconnect
 
-## ?? Prerequisites
+## 📋 Prerequisites
 
 - **Microsoft Graph PowerShell SDK**: `Install-Module Microsoft.Graph -Scope CurrentUser`
 - **Required permissions**: 
@@ -33,7 +33,7 @@ This PowerShell script migrates devices from traditional Windows Autopilot to Wi
   - `DeviceManagementConfiguration.ReadWrite.All`
 - **Administrative access**: Global Administrator or Intune Administrator role
 
-## ?? Usage Examples
+## 🔧 Usage Examples
 
 ### Basic Migration.\Add-AutopilotCorporateIdentifiers.ps1
 ### Safe Testing with Dry Run.\Add-AutopilotCorporateIdentifiers.ps1 -DryRun
@@ -42,7 +42,7 @@ This PowerShell script migrates devices from traditional Windows Autopilot to Wi
 ### Complete Migration with Source Cleanup.\Add-AutopilotCorporateIdentifiers.ps1 -FilterByManufacturer "SAMSUNG" -DeleteFromSource
 ### Test Migration with Source Cleanup.\Add-AutopilotCorporateIdentifiers.ps1 -FilterByManufacturer "Microsoft Corporation" -DeleteFromSource -DryRun
 ### Disconnect After Completion.\Add-AutopilotCorporateIdentifiers.ps1 -Disconnect
-## ?? Parameters
+## 📊 Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -52,7 +52,7 @@ This PowerShell script migrates devices from traditional Windows Autopilot to Wi
 | `DeleteFromSource` | Switch | No | Delete devices from source Autopilot after migration |
 | `Disconnect` | Switch | No | Disconnect from Microsoft Graph when complete |
 
-## ?? Migration Process
+## 🔄 Migration Process
 
 1. **Connect**: Authenticates to Microsoft Graph with required permissions
 2. **Retrieve**: Gets all Windows Autopilot devices from inventory
@@ -62,7 +62,7 @@ This PowerShell script migrates devices from traditional Windows Autopilot to Wi
 6. **Cleanup**: Optionally deletes devices from source Autopilot inventory
 7. **Report**: Provides comprehensive migration and deletion statistics
 
-## ?? Output Information
+## 📈 Output Information
 
 The script provides detailed information including:
 - Total devices found in Autopilot inventory
@@ -72,7 +72,7 @@ The script provides detailed information including:
 - Success/failure statistics for deletion (if enabled)
 - Next steps for completing the migration
 
-## ?? Safety Features
+## ⚠️ Safety Features
 
 - **Dry Run Mode**: Test operations without making changes
 - **Duplicate Detection**: Skips devices already in device preparation
@@ -81,7 +81,7 @@ The script provides detailed information including:
 - **Field Validation**: Handles problematic characters in device names
 - **Connection Management**: Maintains persistent Graph connections
 
-## ?? Migration Workflow
+## 🔗 Migration Workflow
 
 ### Phase 1: Preparation
 1. Run with `-DryRun` to preview changes
@@ -104,7 +104,7 @@ The script provides detailed information including:
 3. Verify imported device identifiers
 4. Begin using Windows Autopilot device preparation
 
-## ? Advanced Usage
+## ⚡ Advanced Usage
 
 ### Staged Migration by Manufacturer# Test each manufacturer separately
 .\Add-AutopilotCorporateIdentifiers.ps1 -FilterByManufacturer "Microsoft Corporation" -DryRun
@@ -116,7 +116,7 @@ The script provides detailed information including:
 .\Add-AutopilotCorporateIdentifiers.ps1 -FilterByManufacturer "SAMSUNG" -DeleteFromSource
 .\Add-AutopilotCorporateIdentifiers.ps1 -FilterByManufacturer "LENOVO" -DeleteFromSource -Disconnect
 ### Combined Filtering.\Add-AutopilotCorporateIdentifiers.ps1 -FilterByManufacturer "Dell" -FilterByModel "Latitude" -DeleteFromSource
-## ??? Troubleshooting
+## 🛠️ Troubleshooting
 
 - **Connection Issues**: Ensure you have proper Microsoft Graph permissions
 - **Migration Failures**: Check device data and retry failed devices
@@ -124,6 +124,6 @@ The script provides detailed information including:
 - **Filter Issues**: Check manufacturer and model name spelling
 - **Duplicate Devices**: Script automatically handles existing device identifiers
 
-## ?? License
+## 📄 License
 
-MIT � Free to use, modify, and share.
+MIT — Free to use, modify, and share.
