@@ -1,44 +1,89 @@
-# Intune Tools and Utilities
+# Intune Management Toolkit 🛠️
 
-:toolbox: A collection of scripts and function apps for Microsoft Intune automation and management.
+A collection of PowerShell scripts and Azure Function Apps for Microsoft Intune management and automation.
 
-## :file_folder: Folder Structureintune-tools/
+## Overview
+
+Scripts and tools for common Intune administration tasks, including Windows Autopilot migrations, device group management, and app dependency automation.
+
+**Features:**
+- PowerShell 7 compatible with backward compatibility to 5.1
+- Microsoft Graph API integration
+- Error handling and logging
+- Azure Function Apps for cloud automation
+
+## 📁 **Repository Structure**
+
+```
+intune-management-toolkit/
 │
-├── scripts/
-│   ├── Add-AutopilotCorporateIdentifiers.ps1
-│   ├── Add-MgDevicesWithAppToGroup.ps1
-│   ├── Check-Intune-Enrollment.ps1
-│   └── Update-Group.ps1
+├── scripts/                              # PowerShell automation scripts
+│   ├── Add-AutopilotCorporateIdentifiers.ps1   # Autopilot migration tool
+│   ├── Add-MgDevicesWithAppToGroup.ps1         # App-based device grouping
+│   ├── Check-Intune-Enrollment.ps1             # Enrollment verification
+│   └── Update-Group.ps1                        # Azure AD group management
 │
-└── function-apps/
-    └── app-dependency-manager/
+└── function-apps/                        # Azure Function Apps
+    └── app-dependency-manager/           # Intune app dependency automation
         ├── host.json
         ├── requirements.psd1
         └── run.ps1
-## :rocket: Tools
+```
 
-### [Add-AutopilotCorporateIdentifiers.ps1](./scripts/Add-AutopilotCorporateIdentifiers.ps1)
-**Windows Autopilot Device Preparation Migration Tool** - Migrates devices from traditional Windows Autopilot to Windows Autopilot device preparation. Features include device filtering, duplicate detection, optional source cleanup, and comprehensive migration tracking.
+## Tools & Scripts
 
-### [Add-MgDevicesWithAppToGroup.ps1](./scripts/Add-MgDevicesWithAppToGroup.ps1)
-Adds devices associated with an Intune-managed app to an Azure AD group using Microsoft Graph.
+### **[Add-AutopilotCorporateIdentifiers.ps1](./scripts/Add-AutopilotCorporateIdentifiers.ps1)**
+**Windows Autopilot Device Preparation Migration Tool**
 
-### [Check-Intune-Enrollment.ps1](./scripts/Check-Intune-Enrollment.ps1)
-Checks if users in a group have their devices enrolled in Intune.
+Migrates devices from traditional Windows Autopilot to Windows Autopilot device preparation.
 
-### [Update-Group.ps1](./scripts/Update-Group.ps1)
-Updates an Azure AD group's membership by adding or removing device IDs.
+**Features:**
+- Device filtering and duplicate detection
+- Optional source cleanup
+- Migration tracking and logging
+- Batch processing support
 
-### [App Dependency Manager](./function-apps/app-dependency-manager/)
-An Azure Function App that manages app dependencies for Intune deployments.
+### **[Add-MgDevicesWithAppToGroup.ps1](./scripts/Add-MgDevicesWithAppToGroup.ps1)**
+Adds devices with specific Intune-managed applications to Azure AD groups using Microsoft Graph API.
 
-## :package: Usage
+### **[Check-Intune-Enrollment.ps1](./scripts/Check-Intune-Enrollment.ps1)**
+Checks Intune enrollment status for users in specified Azure AD groups.
 
-- Scripts are located under the `scripts` folder
-- Function apps are located under the `function-apps` folder
-- Scripts are designed for use with Windows PowerShell 5.1 or PowerShell 7+
-- See individual files and folders for setup and usage instructions
+### **[Update-Group.ps1](./scripts/Update-Group.ps1)**
+Manages Azure AD group membership by adding or removing device IDs.
 
-## :lock: License
+### **[App Dependency Manager](./function-apps/app-dependency-manager/)**
+Azure Function App for managing application dependency chains in Intune deployments.
 
-MIT — free to use, modify, and share.
+## Requirements
+
+- PowerShell 5.1 or PowerShell 7+
+- Microsoft Graph PowerShell SDK
+- Appropriate Microsoft Graph API permissions for device and group management
+
+## Setup
+
+1. Install required PowerShell modules:
+   ```powershell
+   Install-Module Microsoft.Graph -Scope CurrentUser
+   ```
+2. Configure authentication (see individual script documentation)
+3. Test scripts with a limited scope before production use
+
+## Usage Examples
+
+```powershell
+# Check Autopilot migration (test mode)
+.\Add-AutopilotCorporateIdentifiers.ps1 -TenantId "your-tenant-id" -WhatIf
+
+# Add devices with specific app to a group
+.\Add-MgDevicesWithAppToGroup.ps1 -AppName "Microsoft Teams" -GroupName "Teams-Devices"
+```
+
+## License
+
+MIT License - Free to use, modify, and distribute.
+
+---
+
+*Part of the Digital Workplace automation toolkit by [@haakonwibe](https://github.com/haakonwibe)*
