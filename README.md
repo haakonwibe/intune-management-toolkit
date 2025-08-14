@@ -101,12 +101,6 @@ Connect-IntuneGraph -PermissionLevel ReadOnly -Quiet
 
 Migrates devices from traditional Windows Autopilot to Windows Autopilot device preparation using Full permission level.
 
-**Features:**
-- Device filtering and duplicate detection
-- Optional source cleanup
-- Migration tracking and logging
-- Batch processing support
-
 ### **[Add-MgDevicesWithAppToGroup.ps1](./scripts/Add-MgDevicesWithAppToGroup.ps1)**
 Adds devices with specific Intune-managed applications to Azure AD groups using Microsoft Graph API (Standard permission level).
 
@@ -118,6 +112,9 @@ Manages Azure AD group membership by adding or removing device IDs (On-prem AD s
 
 ### **[App Dependency Manager](./function-apps/app-dependency-manager/)**
 Azure Function App for managing application dependency chains in Intune deployments.
+
+## AI-Assisted Development
+This project leverages modern development tools including AI-powered code assistance (e.g. GitHub Copilot) to accelerate scripting and enforce consistent patterns. All AI-generated or assisted contributions are reviewed and curated for accuracy, security, and adherence to best practices before inclusion. Manual validation remains required for production use.
 
 ## Requirements
 
