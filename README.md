@@ -4,118 +4,125 @@ A collection of PowerShell scripts and Azure Function Apps for Microsoft Intune 
 
 ## Overview
 
-Scripts and tools for common Intune administration tasks, including Windows Autopilot migrations, device group management, app dependency automation, compliance reporting, and device lifecycle (stale device) cleanup.
+Scripts and tools for common Intune administration tasks: Windows Autopilot migrations, device group management, application packaging & dependency automation, compliance reporting, stale device cleanup, and deep device diagnostics.
 
 **Features:**
-- PowerShell 7 compatible with backward compatibility to 5.1
-- Microsoft Graph API integration
-- Error handling and logging
-- Azure Function Apps for cloud automation
-- Device lifecycle management (stale / duplicate / orphaned device cleanup)
-- Comprehensive compliance, inventory & device diagnostics reporting
-- Central IntuneToolkit module with standardized Graph connection & utilities
-- Win32 app packaging helper (automatic Intune .intunewin packaging)
+- PowerShell 7 (compatible with 5.1 where possible)
+- Microsoft Graph API integration (least-privilege permission tiers)
+- Consistent logging & error handling (IntuneToolkit module)
+- JSON / HTML export options for reporting & ticket attachment
+- Azure Function Apps for unattended automation
 
-## 📁 **Repository Structure**
-
+## 📁 Repository Structure
 ```
 intune-management-toolkit/
 │
-├── scripts/                              # PowerShell automation scripts
-│   ├── compliance/
-│   │   └── Get-IntuneComplianceReport.ps1        # Compliance reporting (HTML / JSON)
-│   ├── devices/
-│   │   └── Invoke-StaleDeviceCleanup.ps1         # Stale / orphaned device cleanup
+├── scripts/
 │   ├── apps/
-│   │   └── New-IntuneAppPackageFromInstaller.ps1 # Win32 packaging (.intunewin)
+│   │   └── New-IntuneAppPackageFromInstaller.ps1     # Win32 app packaging helper (.intunewin)
+│   ├── compliance/
+│   │   └── Get-IntuneComplianceReport.ps1            # Compliance summary (HTML/JSON)
+│   ├── devices/
+│   │   └── Invoke-StaleDeviceCleanup.ps1             # Stale / orphaned device cleanup
 │   ├── troubleshooting/
-│   │   └── Get-IntuneDeviceDiagnostics.ps1       # Multi-level device diagnostics (Standard/Advanced/Detailed)
-│   ├── Add-AutopilotCorporateIdentifiers.ps1     # Autopilot migration tool
-│   ├── Add-MgDevicesWithAppToGroup.ps1           # App-based device grouping
-│   ├── Check-Intune-Enrollment.ps1               # Enrollment verification
-│   └── Update-Group.ps1                          # Azure AD group management (placeholder)
+│   │   └── Get-IntuneDeviceDiagnostics.ps1           # Multi‑level device diagnostics
+│   ├── Add-AutopilotCorporateIdentifiers.ps1         # Autopilot migration tool
+│   ├── Add-MgDevicesWithAppToGroup.ps1               # App‑based dynamic device grouping
+│   ├── Check-Intune-Enrollment.ps1                   # Enrollment verification
+│   └── Update-Group.ps1                              # Entra ID group membership management
 │
 ├── modules/
-│   └── IntuneToolkit/                           # Reusable helper module
+│   └── IntuneToolkit/                                # Shared helper module (Graph + logging)
 │       ├── IntuneToolkit.psm1
 │       └── IntuneToolkit.psd1
 │
-└── function-apps/                        # Azure Function Apps
-    └── app-dependency-manager/           # Intune app dependency automation
+└── function-apps/
+    └── app-dependency-manager/                       # Azure Function for app dependency automation
         ├── host.json
         ├── requirements.psd1
         └── run.ps1
 ```
 
-## 🔍 Highlight: Get-IntuneDeviceDiagnostics.ps1
-Actionable diagnostics for a single Intune managed device (or a user's most recent device) with progressively deeper Graph data.
+## Tools & Scripts
 
-| Level | Purpose | Typical Runtime | Data Surface (summary) |
-|-------|---------|-----------------|------------------------|
-| Standard | Quick health snapshot (help desk) | < 5s | Core device facts, sync age, compliance, encryption, storage stats |
-| Advanced | Troubleshooting context | ~5–15s | Adds config profile states, compliance policy set, app inventory (top N), groups, autopilot, Defender / BitLocker indicators, issue analysis, recommendations |
-| Detailed | Deep forensic view | 15s+ (org size dependent) | Adds setting-level failing details, conflict/error config settings, expanded app list (with size), hardware metrics, AAD device info, recent actions, audit events, enhanced recommendations, summary health classification |
+### [Add-AutopilotCorporateIdentifiers.ps1](./scripts/Add-AutopilotCorporateIdentifiers.ps1)
+Migration helper to transition devices to Windows Autopilot Device Preparation with optional duplicate detection & cleanup.
 
-### Usage Examples
-```
-# Quick health (default Standard)
+**Key Features:** device filtering, batch processing, migration logging, WhatIf support.
+
+### [Add-MgDevicesWithAppToGroup.ps1](./scripts/Add-MgDevicesWithAppToGroup.ps1)
+Adds devices to an Entra ID / Intune group when a specified managed app is detected on the device.
+
+**Key Features:** Graph filtering, idempotent adds, optional dry run.
+
+### [Check-Intune-Enrollment.ps1](./scripts/Check-Intune-Enrollment.ps1)
+Audits Intune enrollment status for users or groups and flags missing / stale enrollments.
+
+### [Update-Group.ps1](./scripts/Update-Group.ps1)
+Simple utility for adding/removing device IDs from an Entra ID security group (seed / maintenance scenarios).
+
+### [New-IntuneAppPackageFromInstaller.ps1](./scripts/apps/New-IntuneAppPackageFromInstaller.ps1)
+Automates creation of Win32 Intune (.intunewin) packages from common installer types.
+
+**Key Features:** Silent switch heuristics, detection rule scaffolding, output folder hygiene.
+
+### [Get-IntuneComplianceReport.ps1](./scripts/compliance/Get-IntuneComplianceReport.ps1)
+Generates an HTML (and optional JSON) compliance dashboard with device counts, state breakdown, and issue flags.
+
+**Key Features:** Export timestamping, color‑coded status, lightweight Graph footprint.
+
+### [Invoke-StaleDeviceCleanup.ps1](./scripts/devices/Invoke-StaleDeviceCleanup.ps1)
+Identifies and (optionally) retires / deletes stale, duplicate or orphaned device objects.
+
+**Key Features:** Age thresholds, preview (WhatIf), exclusion patterns, action logging.
+
+### [Get-IntuneDeviceDiagnostics.ps1](./scripts/troubleshooting/Get-IntuneDeviceDiagnostics.ps1)
+Actionable per‑device diagnostics with progressive depth levels.
+
+| Level | Purpose | Data Highlights |
+|-------|---------|-----------------|
+| Standard | Quick health | Core facts, sync age, compliance, encryption, storage |
+| Advanced | Troubleshooting | + Config & compliance states, top apps, groups, autopilot, Defender/BitLocker, issues, recs |
+| Detailed | Deep analysis | + Setting failures, conflicts, full app inventory, hardware, AAD device, recent actions, audit events, enhanced recommendations & summary |
+
+**Exports:** JSON bundle (`-OutputPath`) including policies, settings (Detailed), apps, groups, autopilot, protection, audit events (if `-IncludeAuditLogs`), device actions, issues & recommendations.
+
+## IntuneToolkit Module
+Shared helpers under `modules/IntuneToolkit` provide:
+- `Connect-IntuneGraph` with permission level presets (ReadOnly / Standard / Full)
+- `Write-IntuneLog` structured console logging
+- Utility functions leveraged across scripts (connection reuse, batching)
+
+## Requirements
+- PowerShell 7 (recommended) or Windows PowerShell 5.1
+- Microsoft Graph PowerShell SDK (`Install-Module Microsoft.Graph`)
+- Appropriate delegated permissions (additional AuditLog/Directory scopes only when requested)
+
+## Quick Start
+```powershell
+# Install Graph SDK
+Install-Module Microsoft.Graph -Scope CurrentUser
+
+# Run a quick device health check
 ./scripts/troubleshooting/Get-IntuneDeviceDiagnostics.ps1 -DeviceName LAPTOP-123
 
-# Advanced troubleshooting with remediation suggestions
-./scripts/troubleshooting/Get-IntuneDeviceDiagnostics.ps1 -UserPrincipalName user@contoso.com -DiagnosticLevel Advanced -ShowRemediation
+# Generate compliance report
+./scripts/compliance/Get-IntuneComplianceReport.ps1 -OutputPath ./reports
 
-# Detailed forensic export with audit logs & JSON bundle
-./scripts/troubleshooting/Get-IntuneDeviceDiagnostics.ps1 -DeviceId <guid> -DiagnosticLevel Detailed -IncludeAuditLogs -ShowRemediation -OutputPath ./diag
+# Package an installer
+./scripts/apps/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath .\setup.exe -OutputPath .\out
+
+# Identify stale devices (preview)
+./scripts/devices/Invoke-StaleDeviceCleanup.ps1 -DaysInactive 60 -WhatIf
 ```
 
-### Key Switches
-- `-DiagnosticLevel Standard|Advanced|Detailed`
-- `-UserPrincipalName` / `-DeviceName` / `-DeviceId`
-- `-ShowRemediation` (recommendation engine)
-- `-IncludeAuditLogs` (auto-enabled for Detailed)
-- `-OutputPath` (writes JSON bundle for ticket attachment / automation)
-- `-AllUserDevices` (enumerate every device for the supplied UPN)
-
-### Issue Detection Heuristics (non-exhaustive)
-- Stale or missing sync (24h / 7d thresholds)
-- Duplicate compliance policy state entries
-- Non-Windows policies targeting Windows devices (name heuristic)
-- Non-compliant policies & failing settings (Detailed)
-- Configuration profile conflicts / errors
-- Low disk space (<10% / <20%)
-- Missing disk encryption signal
-
-### Exported JSON (when -OutputPath used)
-Includes: Device object, policies, (Detailed: per-setting failures), configuration states, detected apps, groups, autopilot record, protection state, AAD device, audit events (if requested), log collection requests, device action results (Detailed), issues & recommendations.
-
-## IntuneToolkit Module (Core Utilities)
-All scripts leverage `modules/IntuneToolkit/IntuneToolkit.psm1` providing:
-- Unified Microsoft Graph connection via `Connect-IntuneGraph`
-- Permission level presets (principle of least privilege)
-- Logging helper (`Write-IntuneLog`)
-- Device batching & compliance helpers
-- Report export helpers
-
-### Permission Levels
-| Level | Scopes (summary) | Purpose |
-|-------|------------------|---------|
-| ReadOnly | Read device/config/apps + user/group read | Reporting & inventory only |
-| Standard | Read/Write managed devices + read config/apps | Operational tasks (cleanup, grouping) |
-| Full | Adds privileged operations + write config/apps/service | Administrative / migration scripts |
-
-> The diagnostics script requests additional scopes (AuditLog.Read.All / Directory.Read.All) only when you specify `-IncludeAuditLogs` or are in Detailed mode.
-
-## Prerequisites
-- Microsoft Graph PowerShell SDK modules installed (core + beta if using advanced install status endpoints in future)
-- Appropriate Graph delegated permissions for chosen operations
-- PowerShell 7 recommended (Windows PowerShell 5.1 supported)
-
-## Contributing
-PRs welcome: add new diagnostics, extend reporting, or integrate additional Intune data surfaces (e.g. update rings, compliance trend history).
+## Security & Best Practices
+- Principle of least privilege: run with lowest permission tier required
+- Use `-WhatIf` / preview flags before destructive actions (cleanup, migration)
+- Review exported JSON before sharing (sanitise identifiers if needed)
 
 ## License
-MIT — see LICENSE file.
+MIT License – free to use, modify & distribute.
 
 ---
-
-*Part of the Digital Workplace automation toolkit by [@haakonwibe](https://github.com/haakonwibe/intune-management-toolkit)*
+*Digital Workplace automation toolkit by [@haakonwibe](https://github.com/haakonwibe)*
