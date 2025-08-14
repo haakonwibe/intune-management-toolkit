@@ -14,6 +14,7 @@ Scripts and tools for common Intune administration tasks, including Windows Auto
 - Device lifecycle management (stale / duplicate / orphaned device cleanup)
 - Comprehensive compliance and inventory reporting
 - Central IntuneToolkit module with standardized Graph connection & utilities
+- Win32 app packaging helper (automatic Intune .intunewin packaging)
 
 ## 📁 **Repository Structure**
 
@@ -25,6 +26,8 @@ intune-management-toolkit/
 │   │   └── Get-IntuneComplianceReport.ps1      # Compliance reporting
 │   ├── devices/
 │   │   └── Invoke-StaleDeviceCleanup.ps1       # Stale / orphaned device cleanup
+│   ├── apps/
+│   │   └── New-IntuneAppPackageFromInstaller.ps1  # Win32 packaging (.intunewin)
 │   ├── Add-AutopilotCorporateIdentifiers.ps1   # Autopilot migration tool
 │   ├── Add-MgDevicesWithAppToGroup.ps1         # App-based device grouping
 │   ├── Check-Intune-Enrollment.ps1             # Enrollment verification
@@ -66,6 +69,70 @@ Connect-IntuneGraph -PermissionLevel ReadOnly -Quiet   # or Standard / Full
 The function reuses an existing session if sufficient scopes are already granted.
 
 ## Tools & Scripts
+
+### **[New-IntuneAppPackageFromInstaller.ps1](./scripts/apps/New-IntuneAppPackageFromInstaller.ps1)**
+**Automated Win32 App Packaging (.intunewin) for Intune**
+
+Creates Intune-ready Win32 packages from MSI or EXE installers with automatic metadata extraction & detection rule scaffolding.
+
+Key capabilities:
+- Auto-download latest Microsoft Win32 Content Prep Tool (GitHub release API, zipball fallback)
+- Supports MSI & EXE installers
+- MSI metadata extraction (ProductName, Version, ProductCode, Manufacturer)
+- EXE heuristic engine (InstallShield, Inno Setup, NSIS, Wise, Squirrel, MSI wrapper hints) with silent switch suggestions
+- Default install/uninstall command generation (customizable)
+- Detection method options: Auto / MSI / File / Registry / Script
+- Produces: .intunewin, Metadata.json, optional DetectionScript.ps1
+- Robust logging + retry & diagnostic logic if packaging output not found
+
+Example basic usage:
+```powershell
+# MSI
+./scripts/apps/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath 'C:\Intune\Apps\7-ZipMSI\7z2501-x64.msi'
+
+# EXE with explicit silent argument
+./scripts/apps/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath 'C:\Installers\NotepadPlusPlus.exe' -InstallCommand 'NotepadPlusPlus.exe /S'
+
+# EXE with custom file detection
+./scripts/apps/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath 'C:\Installers\Tool.exe' -DetectionMethod File -FileDetectionPath 'C:\Program Files\Tool\Tool.exe'
+
+# Custom script detection
+./scripts/apps/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath .\setup.exe -DetectionMethod Script -CustomDetectionScriptPath .\MyDetect.ps1
+```
+
+Sample run (MSI packaging):
+```
+> .\New-IntuneAppPackageFromInstaller.ps1 -InstallerPath "C:\Intune\Apps\7-ZipMSI\7z2501-x64.msi"
+[2025-08-14 13:01:18] Starting New-IntuneAppPackageFromInstaller.ps1
+[2025-08-14 13:01:18] PowerShell version: 7.5.2
+[2025-08-14 13:01:18] IntuneWinAppUtil.exe not found. Downloading latest release...
+[2025-08-14 13:01:18] No release assets found. Falling back to zipball_url archive.
+[2025-08-14 13:01:19] Expanding archive...
+[2025-08-14 13:01:19] Downloaded Win32 Content Prep Tool version tag: v1.8.7
+[2025-08-14 13:01:19] Extracting MSI metadata...
+[2025-08-14 13:01:19] Preparing to invoke IntuneWinAppUtil...
+[2025-08-14 13:01:19] InstallCommand = msiexec /i "7z2501-x64.msi" /qn /norestart
+[2025-08-14 13:01:19] UninstallCommand = msiexec /x {23170F69-40C1-2702-2501-000001000000} /qn /norestart
+[2025-08-14 13:01:19] Detection = MSI
+[2025-08-14 13:01:19] Invoking IntuneWinAppUtil.exe
+[2025-08-14 13:01:19] IntuneWinAppUtil exit code: 0
+[2025-08-14 13:01:19] Package created: C:\Intune\Apps\7-ZipMSI\IntunePackages\7-Zip_25.01__x64_edition__20250814-130119.intunewin
+[2025-08-14 13:01:19] Metadata exported: C:\Intune\Apps\7-ZipMSI\IntunePackages\7-Zip_25.01__x64_edition__20250814-130119_Metadata.json
+[2025-08-14 13:01:19] Summary:
+ App Name      : 7-Zip 25.01 (x64 edition)
+ Publisher     : Igor Pavlov
+ Version       : 25.01.00.0
+ InstallerType : MSI
+ Package File  : C:\Intune\Apps\7-ZipMSI\IntunePackages\7-Zip_25.01__x64_edition__20250814-130119.intunewin
+ Metadata File : C:\Intune\Apps\7-ZipMSI\IntunePackages\7-Zip_25.01__x64_edition__20250814-130119_Metadata.json
+ Detection     : MSI
+[2025-08-14 13:01:19] Completed.
+```
+
+Artifacts produced:
+- .intunewin package (ready for Intune upload)
+- Metadata.json (contains install/uninstall commands, detection rule data, silent switch hints)
+- DetectionScript.ps1 (only when -DetectionMethod Script / custom script used)
 
 ### **[Invoke-StaleDeviceCleanup.ps1](./scripts/devices/Invoke-StaleDeviceCleanup.ps1)**
 **Intune & Azure AD Device Lifecycle Cleanup**
@@ -148,6 +215,9 @@ Connect-IntuneGraph -PermissionLevel Standard
 Import-Module ./modules/IntuneToolkit/IntuneToolkit.psm1 -Force
 Connect-IntuneGraph -PermissionLevel Full
 ./scripts/Add-AutopilotCorporateIdentifiers.ps1 -DryRun
+
+# Win32 packaging (local only)
+./scripts/apps/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath C:\Installers\App.msi
 ```
 
 ## Usage Examples (Legacy Direct Calls Still Supported)
