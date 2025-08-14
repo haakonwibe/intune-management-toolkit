@@ -19,31 +19,124 @@
 function Connect-IntuneGraph {
     <#
     .SYNOPSIS
-        Establishes a connection to Microsoft Graph with required Intune scopes.
-    
-    .PARAMETER Scopes
-        Array of Microsoft Graph permission scopes required for the operation.
-    
+        Establishes a connection to Microsoft Graph with opinionated permission level presets.
+
+    .DESCRIPTION
+        Provides simplified permission selection via -PermissionLevel while supporting custom scope
+        definitions through -AdditionalScopes or direct -PermissionLevel Custom usage.
+        Will re-use an existing connection if all required scopes are already granted.
+
+    .PARAMETER PermissionLevel
+        Predefined permission set: ReadOnly, Standard, Full, Custom. (Default: Standard)
+
+    .PARAMETER AdditionalScopes
+        Extra scopes to append to selected PermissionLevel or explicit list when using Custom.
+
     .PARAMETER NoWelcome
-        Suppresses the welcome message when connecting to Microsoft Graph.
+        Suppresses the Microsoft Graph welcome banner.
+
+    .PARAMETER ForceReconnect
+        Forces a new Connect-MgGraph even if current context already satisfies required scopes.
+
+    .PARAMETER Quiet
+        Suppress non-error console output (still writes Verbose / errors). Prefer using -Verbose for diagnostics.
+
+    .EXAMPLE
+        Connect-IntuneGraph -PermissionLevel ReadOnly
+
+    .EXAMPLE
+        Connect-IntuneGraph -PermissionLevel Full -AdditionalScopes "Reports.Read.All"
+
+    .EXAMPLE
+        Connect-IntuneGraph -PermissionLevel Custom -AdditionalScopes "Device.Read.All","Group.Read.All"
+
+    .EXAMPLE
+        Connect-IntuneGraph -PermissionLevel Standard -Verbose
+
     #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $false)]
-        [string[]]$Scopes = @(
-            "DeviceManagementManagedDevices.Read.All",
-            "DeviceManagementConfiguration.Read.All",
-            "User.Read.All"
-        ),
-        
+        [ValidateSet('ReadOnly','Standard','Full','Custom')]
+        [string]$PermissionLevel = 'Standard',
+
         [Parameter(Mandatory = $false)]
-        [switch]$NoWelcome
+        [string[]]$AdditionalScopes = @(),
+
+        [Parameter(Mandatory = $false)]
+        [switch]$NoWelcome,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$ForceReconnect,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$Quiet
     )
-    
+
+    # Predefined scope sets (ordered roughly by least to most privilege)
+    $scopeSets = @{        
+        ReadOnly = @(
+            'DeviceManagementManagedDevices.Read.All'
+            'DeviceManagementConfiguration.Read.All'
+            'DeviceManagementApps.Read.All'
+            'User.Read.All'
+            'Group.Read.All'
+        )
+        Standard = @(
+            'DeviceManagementManagedDevices.ReadWrite.All'
+            'DeviceManagementConfiguration.Read.All'
+            'DeviceManagementApps.Read.All'
+            'User.Read.All'
+            'Group.Read.All'
+        )
+        Full = @(
+            'DeviceManagementManagedDevices.ReadWrite.All'
+            'DeviceManagementManagedDevices.PrivilegedOperations.All'
+            'DeviceManagementConfiguration.ReadWrite.All'
+            'DeviceManagementApps.ReadWrite.All'
+            'DeviceManagementServiceConfig.ReadWrite.All'
+            'User.Read.All'
+            'Group.ReadWrite.All'
+            'Directory.Read.All'
+        )
+    }
+
+    if ($PermissionLevel -eq 'Custom' -and -not $AdditionalScopes) {
+        throw 'When using -PermissionLevel Custom you must supply -AdditionalScopes.'
+    }
+
+    $requestedScopes = if ($PermissionLevel -eq 'Custom') { $AdditionalScopes } else { $scopeSets[$PermissionLevel] + $AdditionalScopes }
+    $scopes = $requestedScopes | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
+
     try {
-        Write-Verbose "Connecting to Microsoft Graph with scopes: $($Scopes -join ', ')"
-        Connect-MgGraph -Scopes $Scopes -NoWelcome:$NoWelcome
-        Write-Verbose "Successfully connected to Microsoft Graph"
+        $haveConnection = $false
+        if (-not $ForceReconnect) {
+            try {
+                if (Test-GraphConnection -RequiredScopes $scopes) { $haveConnection = $true }
+            } catch { }
+        }
+
+        if ($haveConnection) {
+            if (-not $Quiet) { Write-Host "[Connect-IntuneGraph] Already connected with required scopes (PermissionLevel=$PermissionLevel)." -ForegroundColor Green }
+            return (Get-MgContext)
+        }
+
+        if (-not $Quiet) { Write-Host "[Connect-IntuneGraph] Connecting to Microsoft Graph (PermissionLevel=$PermissionLevel)" -ForegroundColor Cyan }
+        Write-Verbose "Scopes requested: $($scopes -join ', ')"
+        Connect-MgGraph -Scopes $scopes -NoWelcome:$NoWelcome
+
+        $ctx = Get-MgContext
+        if (-not $ctx) { throw 'Graph context not returned after connection attempt.' }
+
+        # Validate scopes post-connection
+        $missing = $scopes | Where-Object { $_ -notin $ctx.Scopes }
+        if ($missing) {
+            Write-Warning "Connected but missing expected scopes: $($missing -join ', ')"
+        } else {
+            if (-not $Quiet) { Write-Host "[Connect-IntuneGraph] Connected as $($ctx.Account)" -ForegroundColor Green }
+        }
+
+        return $ctx
     }
     catch {
         throw "Failed to connect to Microsoft Graph: $_"
@@ -63,28 +156,17 @@ function Test-GraphConnection {
         [Parameter(Mandatory = $false)]
         [string[]]$RequiredScopes
     )
-    
     try {
         $context = Get-MgContext
-        if (-not $context) {
-            return $false
-        }
-        
+        if (-not $context) { return $false }
         if ($RequiredScopes) {
             $currentScopes = $context.Scopes
             $missingScopes = $RequiredScopes | Where-Object { $_ -notin $currentScopes }
-            
-            if ($missingScopes) {
-                Write-Warning "Missing required scopes: $($missingScopes -join ', ')"
-                return $false
-            }
+            if ($missingScopes) { return $false }
         }
-        
         return $true
     }
-    catch {
-        return $false
-    }
+    catch { return $false }
 }
 
 #endregion

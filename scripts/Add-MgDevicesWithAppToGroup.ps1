@@ -1,3 +1,12 @@
+# IntuneToolkit module import & Graph connection (Standard permissions for read & group membership writes)
+try {
+    $toolkitPath = Join-Path $PSScriptRoot '../modules/IntuneToolkit/IntuneToolkit.psm1'
+    if (-not (Test-Path $toolkitPath)) { $toolkitPath = Join-Path $PSScriptRoot '../../modules/IntuneToolkit/IntuneToolkit.psm1' }
+    if (-not (Test-Path $toolkitPath)) { throw 'IntuneToolkit module not found.' }
+    Import-Module $toolkitPath -Force -ErrorAction Stop
+    Connect-IntuneGraph -PermissionLevel Standard -Quiet
+} catch { Write-Host "Failed to import/connect IntuneToolkit: $_" -ForegroundColor Red; throw }
+
 # Set the name of the app you're targeting
 $appName = "BusinessApp"
 

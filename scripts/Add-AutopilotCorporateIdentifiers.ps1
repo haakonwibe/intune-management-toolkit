@@ -72,21 +72,19 @@ param (
 Write-Host "=== Windows Autopilot Device Preparation Migration Tool ===" -ForegroundColor Cyan
 Write-Host "This script migrates Autopilot devices to Windows Autopilot device preparation." -ForegroundColor Yellow
 
-if ($DeleteFromSource) {
-    Write-Host "⚠️  WARNING: Devices will be DELETED from source Autopilot inventory after successful migration!" -ForegroundColor Red
-}
+if ($DeleteFromSource) { Write-Host "⚠️  WARNING: Devices will be DELETED from source Autopilot inventory after successful migration!" -ForegroundColor Red }
+Write-Host ''
 
-Write-Host ""
-
-# Connect to Microsoft Graph with the necessary scopes
+# Import toolkit and connect (Full for write + service config operations)
 try {
-    Write-Host "Connecting to Microsoft Graph..." -ForegroundColor Yellow
-    Connect-MgGraph -Scopes "DeviceManagementServiceConfig.ReadWrite.All", "DeviceManagementConfiguration.ReadWrite.All" -NoWelcome
-    Write-Host "Connected successfully to Microsoft Graph." -ForegroundColor Green
-} catch {
-    Write-Error "Failed to connect to Microsoft Graph: $_"
-    exit 1
-}
+    $toolkitPath = Join-Path $PSScriptRoot './modules/IntuneToolkit/IntuneToolkit.psm1'
+    if (-not (Test-Path $toolkitPath)) { $toolkitPath = Join-Path $PSScriptRoot '../modules/IntuneToolkit/IntuneToolkit.psm1' }
+    if (-not (Test-Path $toolkitPath)) { $toolkitPath = Join-Path $PSScriptRoot '../../modules/IntuneToolkit/IntuneToolkit.psm1' }
+    if (-not (Test-Path $toolkitPath)) { throw "IntuneToolkit module not found relative to script path." }
+    Import-Module $toolkitPath -Force -ErrorAction Stop
+    Connect-IntuneGraph -PermissionLevel Full -Quiet
+    Write-Host 'Connected via IntuneToolkit (Full permission set).' -ForegroundColor Green
+} catch { Write-Error "Failed to import/connect IntuneToolkit: $_"; exit 1 }
 
 # Function to check if device identifier already exists in Autopilot device preparation
 function Test-DeviceIdentifierExists {

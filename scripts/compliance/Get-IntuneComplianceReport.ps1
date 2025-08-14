@@ -43,9 +43,9 @@
     Prerequisite   : Microsoft Graph PowerShell SDK
     Copyright      : (c) 2025 Haakon Wibe. All rights reserved.
     License        : MIT
-    Version        : 1.1
+    Version        : 1.2 (uses IntuneToolkit Connect-IntuneGraph)
     Creation Date  : 2025-01-24
-    Last Modified  : 2025-01-24
+    Last Modified  : 2025-08-14
 
 .EXAMPLE
     .\Get-IntuneComplianceReport.ps1
@@ -95,8 +95,13 @@ param (
     [switch]$Disconnect
 )
 
-# Requires the Microsoft Graph PowerShell SDK
-# Install-Module Microsoft.Graph -Scope CurrentUser
+# Import IntuneToolkit module & establish (read-only) Graph connection
+try {
+    $toolkitPath = Join-Path $PSScriptRoot '../../modules/IntuneToolkit/IntuneToolkit.psm1'
+    if (-not (Test-Path $toolkitPath)) { throw "IntuneToolkit module not found at $toolkitPath" }
+    Import-Module $toolkitPath -Force -ErrorAction Stop
+    Connect-IntuneGraph -PermissionLevel ReadOnly -Quiet
+} catch { Write-Host "Failed to import/connect via IntuneToolkit: $_" -ForegroundColor Red; throw }
 
 #region Helper Functions
 
@@ -401,16 +406,7 @@ try {
         }
     }
     
-    # Connect to Microsoft Graph
-    Write-LogMessage "Connecting to Microsoft Graph..." -Level Info
-    try {
-        Connect-MgGraph -Scopes "DeviceManagementManagedDevices.Read.All", "DeviceManagementConfiguration.Read.All", "User.Read.All" -NoWelcome
-        Write-LogMessage "Connected successfully to Microsoft Graph" -Level Success
-    } catch {
-        throw "Failed to connect to Microsoft Graph: $_"
-    }
-    
-    # Get all managed devices with progress indication
+    # Connection already established via Connect-IntuneGraph above
     Write-LogMessage "Retrieving managed devices from Intune..." -Level Info
     $allDevices = if ($Top) {
         Get-MgDeviceManagementManagedDevice -Top $Top -All

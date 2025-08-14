@@ -16,7 +16,7 @@
     File Name    : Invoke-StaleDeviceCleanup.ps1
     Author       : Haakon Wibe
     Contributor  : Generated with assistance from GitHub Copilot
-    Version      : 0.1 (preview)
+    Version      : 0.2 (uses IntuneToolkit Connect-IntuneGraph)
     Requires     : Microsoft.Graph PowerShell SDK
     Tested       : PowerShell 7.4 +, fallback to Windows PowerShell 5.1
     License      : MIT
@@ -418,15 +418,14 @@ if (-not (Test-Path $BackupPath)) { New-Item -Path $BackupPath -ItemType Directo
 
 $exclusions = Import-ExclusionList -Path $ExclusionListPath
 
-# Connect to Graph (reuse existing context if present)
+# Import toolkit & connect using Standard permission set (write operations required)
 try {
-    Write-LogMessage 'Connecting to Microsoft Graph...' -Level Info
-    $scopes = @('DeviceManagementManagedDevices.ReadWrite.All','Device.ReadWrite.All','Directory.Read.All')
-    Connect-MgGraph -Scopes $scopes -NoWelcome -ErrorAction Stop
-    Write-LogMessage 'Connected to Microsoft Graph.' -Level Success
-} catch {
-    Write-LogMessage "Graph connection failed: $_" -Level Error; throw
-}
+    $toolkitPath = Join-Path $PSScriptRoot '../../modules/IntuneToolkit/IntuneToolkit.psm1'
+    if (-not (Test-Path $toolkitPath)) { throw "IntuneToolkit module not found at $toolkitPath" }
+    Import-Module $toolkitPath -Force -ErrorAction Stop
+    Connect-IntuneGraph -PermissionLevel Standard -Quiet:$false | Out-Null
+    Write-LogMessage 'Connected via IntuneToolkit (Standard permission set).' -Level Success
+} catch { Write-LogMessage "Failed to import/connect IntuneToolkit: $_" -Level Error; throw }
 #endregion
 
 #region Data Retrieval

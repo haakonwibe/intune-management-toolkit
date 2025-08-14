@@ -43,13 +43,14 @@ param (
     [string]$DeviceType = 'All'
 )
 
-# Copyright (c) 2024 Haakon Wibe. All rights reserved.
-
-# Requires the Microsoft Graph PowerShell SDK
-# Install-Module Microsoft.Graph -Scope CurrentUser
-
-# Connect to Microsoft Graph with the necessary scopes
-Connect-MgGraph -Scopes "User.Read.All", "Group.Read.All", "DeviceManagementManagedDevices.Read.All" -NoWelcome
+# Import IntuneToolkit and establish read-only connection
+try {
+    $toolkitPath = Join-Path $PSScriptRoot '../modules/IntuneToolkit/IntuneToolkit.psm1'
+    if (-not (Test-Path $toolkitPath)) { $toolkitPath = Join-Path $PSScriptRoot '../../modules/IntuneToolkit/IntuneToolkit.psm1' }
+    if (-not (Test-Path $toolkitPath)) { throw 'IntuneToolkit module not found.' }
+    Import-Module $toolkitPath -Force -ErrorAction Stop
+    Connect-IntuneGraph -PermissionLevel ReadOnly -Quiet
+} catch { Write-Error "Failed to import/connect IntuneToolkit: $_"; exit 1 }
 
 # Function to get Intune enrolled devices for a user
 function Get-UserIntuneDevices {
