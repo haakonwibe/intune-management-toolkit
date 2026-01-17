@@ -50,6 +50,12 @@ function Write-Log {
     Add-Content -Path $LogPath -Value "[$timestamp] $Message" -Force
 }
 
+function Show-UserMessage {
+    param([string]$Message)
+    # Use msg.exe to reliably show message to console user from SYSTEM context
+    msg * /time:30 $Message 2>$null
+}
+
 try {
     Write-Log "BitLocker disable initiated by user"
 
@@ -58,27 +64,22 @@ try {
 
     if ($volume.ProtectionStatus -eq "Off") {
         Write-Log "BitLocker protection is already off on C: drive"
-        $msg = "BitLocker is already disabled on the C: drive."
+        Show-UserMessage "BitLocker is already disabled on the C: drive."
     }
     elseif ($volume.VolumeStatus -eq "FullyDecrypted") {
         Write-Log "C: drive is already fully decrypted"
-        $msg = "The C: drive is already decrypted."
+        Show-UserMessage "The C: drive is already decrypted."
     }
     else {
         Write-Log "Disabling BitLocker on C: drive (Status: $($volume.VolumeStatus), Protection: $($volume.ProtectionStatus))"
         Disable-BitLocker -MountPoint "C:" -ErrorAction Stop
         Write-Log "BitLocker decryption started successfully"
-        $msg = "BitLocker decryption has started on the C: drive.`n`nThis may take a while. You can continue working normally."
+        Show-UserMessage "BitLocker decryption has started on the C: drive. This may take a while. You can continue working normally."
     }
-
-    # Show notification to user
-    Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show($msg, "BitLocker", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 }
 catch {
     Write-Log "ERROR: $($_.Exception.Message)"
-    Add-Type -AssemblyName System.Windows.Forms
-    [System.Windows.Forms.MessageBox]::Show("Failed to disable BitLocker: $($_.Exception.Message)", "BitLocker Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+    Show-UserMessage "Failed to disable BitLocker: $($_.Exception.Message)"
     exit 1
 }
 '@
@@ -99,6 +100,16 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 
 Register-ScheduledTask -TaskName $TaskName -Action $action -Principal $principal -Settings $settings -Description "Disables BitLocker on C: drive for Intune/Autopilot reset preparation" | Out-Null
 Write-Log "Created scheduled task: $TaskName"
+
+# Grant standard users permission to run the task
+# SDDL: SYSTEM=Full, Administrators=Full, Users=Read+Execute (start task)
+$scheduler = New-Object -ComObject Schedule.Service
+$scheduler.Connect()
+$folder = $scheduler.GetFolder('\')
+$task = $folder.GetTask($TaskName)
+$sddl = 'D:(A;;FA;;;SY)(A;;FA;;;BA)(A;;GRGX;;;BU)'
+$task.SetSecurityDescriptor($sddl, 0)
+Write-Log "Granted standard users permission to run the task"
 
 # Get current logged-in user's desktop
 $loggedInUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
