@@ -1,3 +1,24 @@
+<#
+.SYNOPSIS
+    Updates Active Directory group membership from a CSV file containing user UPNs.
+
+.DESCRIPTION
+    This script clears an existing Active Directory group and repopulates it with users
+    specified in a CSV file. Useful for maintaining group membership based on external
+    data sources or scheduled updates.
+
+.NOTES
+    File Name      : Update-Group.ps1
+    Author         : Haakon Wibe
+    Prerequisite   : Active Directory PowerShell module
+    License        : MIT
+    Version        : 1.0
+
+.EXAMPLE
+    .\Update-Group.ps1
+    Runs the script with hardcoded $groupName and $csvPath values (edit script to configure).
+#>
+
 # Import the Active Directory module
 Import-Module ActiveDirectory
 

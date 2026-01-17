@@ -1,3 +1,19 @@
+<#
+.SYNOPSIS
+    Azure Function that adds users to an Entra ID group based on app installation.
+
+.DESCRIPTION
+    Timer-triggered Azure Function that monitors for devices with a specific app installed
+    and automatically adds the associated users to a target Entra ID security group.
+    Uses managed identity authentication to connect to Microsoft Graph.
+
+.NOTES
+    Author  : Haakon Wibe
+    License : MIT
+    Context : Azure Function App (timer trigger)
+    Config  : Set TargetAppName and TargetGroupName in application settings.
+#>
+
 # Input bindings are passed in via param block.
 param($Timer)
 

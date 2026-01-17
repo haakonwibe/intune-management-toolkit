@@ -57,8 +57,10 @@ Scripts use the IntuneToolkit module's permission presets:
 
 ### Script Categories
 - **apps/**: Win32 app packaging and deployment helpers
+- **bitlocker/**: Intune Win32 app for user-initiated BitLocker disable (Autopilot reset prep)
 - **compliance/**: Compliance reporting and analysis
 - **devices/**: Device lifecycle management (cleanup, diagnostics)
+- **proactive-remediations/**: Intune Proactive Remediation packages (detection + remediation scripts)
 - **troubleshooting/**: Deep device diagnostics with progressive detail levels
 
 ### Azure Functions

@@ -9,7 +9,9 @@
     - Desktop shortcut for the current user to trigger decryption
 
 .NOTES
-    Run as SYSTEM context via Intune Win32 app deployment.
+    Author  : Haakon Wibe
+    License : MIT
+    Context : Run as SYSTEM via Intune Win32 app deployment.
     Use case: Prepare devices for Intune/Autopilot reset by removing BitLocker PIN requirement.
 #>
 

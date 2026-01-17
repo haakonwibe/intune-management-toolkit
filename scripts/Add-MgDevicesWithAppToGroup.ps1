@@ -1,3 +1,24 @@
+<#
+.SYNOPSIS
+    Adds users with a specific app installed on their devices to an Entra ID group.
+
+.DESCRIPTION
+    This script finds all managed devices that have a specified app installed, retrieves the
+    associated user IDs, and adds those users to a target Entra ID security group. Useful for
+    app-based dynamic group membership scenarios.
+
+.NOTES
+    File Name      : Add-MgDevicesWithAppToGroup.ps1
+    Author         : Haakon Wibe
+    Prerequisite   : Microsoft Graph PowerShell SDK
+    License        : MIT
+    Version        : 1.0
+
+.EXAMPLE
+    .\Add-MgDevicesWithAppToGroup.ps1
+    Runs the script with hardcoded $appName and $groupId values (edit script to configure).
+#>
+
 # IntuneToolkit module import & Graph connection (Standard permissions for read & group membership writes)
 try {
     $toolkitPath = Join-Path $PSScriptRoot '../modules/IntuneToolkit/IntuneToolkit.psm1'

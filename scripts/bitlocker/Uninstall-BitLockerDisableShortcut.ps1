@@ -9,7 +9,9 @@
     - Scripts folder (optional - keeps logs by default)
 
 .NOTES
-    Run as SYSTEM context via Intune.
+    Author  : Haakon Wibe
+    License : MIT
+    Context : Run as SYSTEM via Intune.
 #>
 
 $ErrorActionPreference = "SilentlyContinue"

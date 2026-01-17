@@ -1,6 +1,7 @@
-<#!
+<#
 .SYNOPSIS
     Intune device diagnostics (Standard | Advanced | Detailed) with actionable, real Graph data.
+
 .DESCRIPTION
     Standard  (Quick ~5s): Core device facts + health indicators (sync age, compliance, encryption, storage).
     Advanced  (~30s): Adds issue analysis, compliance policy breakdown (incl. failing settings), configuration
@@ -13,16 +14,42 @@
     Only displays sections that have data (no explicit '(none)' noise). All data comes from Microsoft Graph
     using SDK cmdlets (with beta fallbacks only where necessary) – no placeholders.
 
-.PARAMETER DeviceId | DeviceName | UserPrincipalName
-    One identifier is required. If UserPrincipalName returns multiple devices, newest by LastSync unless -AllUserDevices.
+.PARAMETER DeviceId
+    The Intune device ID to diagnose.
+
+.PARAMETER DeviceName
+    The device name to search for in Intune.
+
+.PARAMETER UserPrincipalName
+    Find devices by user. Returns newest by LastSync unless -AllUserDevices is specified.
+
 .PARAMETER DiagnosticLevel
-    Standard | Advanced | Detailed (legacy Basic -> Standard, LegacyStandard -> Advanced)
+    Standard | Advanced | Detailed (legacy Basic -> Standard, LegacyStandard -> Advanced).
+
 .PARAMETER IncludeAuditLogs
     Adds audit log / directory events (needs AuditLog.Read.All + Directory.Read.All) – automatically added for Detailed.
+
 .PARAMETER OutputPath
     When supplied, exports a JSON bundle with all collected data for the device.
+
 .PARAMETER ShowRemediation
     Print remediation recommendations.
+
+.NOTES
+    File Name      : Get-IntuneDeviceDiagnostics.ps1
+    Author         : Haakon Wibe
+    Prerequisite   : Microsoft Graph PowerShell SDK
+    License        : MIT
+    Version        : 1.0
+
+.EXAMPLE
+    .\Get-IntuneDeviceDiagnostics.ps1 -DeviceName "LAPTOP-123"
+
+.EXAMPLE
+    .\Get-IntuneDeviceDiagnostics.ps1 -DeviceName "LAPTOP-123" -DiagnosticLevel Advanced
+
+.EXAMPLE
+    .\Get-IntuneDeviceDiagnostics.ps1 -UserPrincipalName "user@contoso.com" -DiagnosticLevel Detailed -OutputPath "C:\Reports"
 #>
 [CmdletBinding()]param(
     [string]$DeviceId,

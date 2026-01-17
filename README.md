@@ -20,12 +20,20 @@ intune-management-toolkit/
 ├── scripts/
 │   ├── apps/
 │   │   └── New-IntuneAppPackageFromInstaller.ps1     # Win32 app packaging helper (.intunewin)
+│   ├── bitlocker/
+│   │   ├── Install-BitLockerDisableShortcut.ps1      # Intune app: desktop shortcut to disable BitLocker
+│   │   ├── Uninstall-BitLockerDisableShortcut.ps1    # Uninstall script for Intune
+│   │   └── Detect-BitLockerDisableShortcut.ps1       # Detection rule for Intune
 │   ├── compliance/
 │   │   └── Get-IntuneComplianceReport.ps1            # Compliance summary (HTML/JSON)
 │   ├── devices/
 │   │   └── Invoke-StaleDeviceCleanup.ps1             # Stale / orphaned device cleanup
 │   ├── troubleshooting/
 │   │   └── Get-IntuneDeviceDiagnostics.ps1           # Multi‑level device diagnostics
+│   ├── proactive-remediations/
+│   │   └── local-admin/
+│   │       ├── Detect-UserLocalAdmin.ps1             # Detection: check if user is local admin
+│   │       └── Remediate-UserLocalAdmin.ps1          # Remediation: add user to Administrators
 │   ├── Add-AutopilotCorporateIdentifiers.ps1         # Autopilot migration tool
 │   ├── Add-MgDevicesWithAppToGroup.ps1               # App‑based dynamic device grouping
 │   ├── Check-Intune-Enrollment.ps1                   # Enrollment verification
@@ -75,6 +83,38 @@ Generates an HTML (and optional JSON) compliance dashboard with device counts, s
 Identifies and (optionally) retires / deletes stale, duplicate or orphaned device objects.
 
 **Key Features:** Age thresholds, preview (WhatIf), exclusion patterns, action logging.
+
+### [BitLocker Disable Shortcut](./scripts/bitlocker/)
+Intune Win32 app that installs a desktop shortcut allowing users to disable BitLocker on the OS drive. Useful for preparing devices for Intune/Autopilot reset without BitLocker PIN blocking the process.
+
+**Files:**
+- `Install-BitLockerDisableShortcut.ps1` – Install script (creates scheduled task + desktop shortcut)
+- `Uninstall-BitLockerDisableShortcut.ps1` – Uninstall script
+- `Detect-BitLockerDisableShortcut.ps1` – Detection rule for Intune
+
+**Intune Deployment:**
+| Setting | Value |
+|---------|-------|
+| Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-BitLockerDisableShortcut.ps1` |
+| Uninstall command | `powershell.exe -ExecutionPolicy Bypass -File Uninstall-BitLockerDisableShortcut.ps1` |
+| Install behavior | System |
+| Detection | Custom script → `Detect-BitLockerDisableShortcut.ps1` |
+
+### [Local Admin Proactive Remediation](./scripts/proactive-remediations/local-admin/)
+Intune Proactive Remediation package that adds the currently logged-on user to the local Administrators group.
+
+**Files:**
+- `Detect-UserLocalAdmin.ps1` – Detection script (checks if user is already admin)
+- `Remediate-UserLocalAdmin.ps1` – Remediation script (adds user to Administrators)
+
+**Intune Deployment:**
+| Setting | Value |
+|---------|-------|
+| Run this script using the logged-on credentials | No |
+| Enforce script signature check | No |
+| Run script in 64-bit PowerShell | Yes |
+
+**Logging:** `C:\ProgramData\IntuneTools\LocalAdmin.log`
 
 ### [Get-IntuneDeviceDiagnostics.ps1](./scripts/troubleshooting/Get-IntuneDeviceDiagnostics.ps1)
 Actionable per‑device diagnostics with progressive depth levels.

@@ -1,4 +1,4 @@
-<#!
+<#
 .SYNOPSIS
     Creates an Intune Win32 (.intunewin) package from an MSI or EXE installer with metadata & detection scaffolding.
 
@@ -14,9 +14,10 @@
     Supports PowerShell 7+ and Windows PowerShell 5.1 (no PS7‑only syntax used).
 
 .NOTES
-    Author  : Haakon Wibe (+ AI assistant)
-    Version : 1.0.0
-    License : MIT
+    File Name      : New-IntuneAppPackageFromInstaller.ps1
+    Author         : Haakon Wibe
+    License        : MIT
+    Version        : 1.0.0
 
 .EXAMPLE
     ./New-IntuneAppPackageFromInstaller.ps1 -InstallerPath C:\Installers\7zip.msi

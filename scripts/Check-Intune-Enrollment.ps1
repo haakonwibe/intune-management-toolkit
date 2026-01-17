@@ -14,14 +14,11 @@
     The type of devices to display. Valid options are 'All', 'iOS', 'Android', 'Windows'. Default is 'All'.
 
 .NOTES
-    File Name      : Check-IntuneEnrollment.ps1
+    File Name      : Check-Intune-Enrollment.ps1
     Author         : Haakon Wibe
     Prerequisite   : Microsoft Graph PowerShell SDK
-    Copyright      : (c) 2024 Haakon Wibe. All rights reserved.
-    License        : GPL
+    License        : MIT
     Version        : 1.2
-    Creation Date  : 2024-09-12
-    Last Modified  : 2024-09-12
 
 .EXAMPLE
     .\Check-IntuneEnrollment.ps1 -GroupId "12345678-1234-1234-1234-123456789012" -DeviceType iOS

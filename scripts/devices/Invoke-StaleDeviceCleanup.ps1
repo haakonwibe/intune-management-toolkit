@@ -1,4 +1,4 @@
-<#!
+<#
 .SYNOPSIS
     Intune & Azure AD stale device lifecycle management and cleanup tool.
 
@@ -6,20 +6,18 @@
     Identifies and (optionally) retires or deletes stale / orphaned / duplicate / failed enrollment
     devices from Microsoft Intune (managedDevices) and Azure AD (device directory objects).
 
-    Safety focused: honours WhatIf / Confirm, supports exclusion lists, device caps per run, 
+    Safety focused: honours WhatIf / Confirm, supports exclusion lists, device caps per run,
     pre-action backup export, detailed reports (candidates, actions, skipped) and optional rollback helper.
 
     Rollback limitations: Intune retire / delete operations and Azure AD device deletions are not fully
     reversible. The backup produced can help with investigations or (if still in soft-delete) manual restore.
 
 .NOTES
-    File Name    : Invoke-StaleDeviceCleanup.ps1
-    Author       : Haakon Wibe
-    Contributor  : Generated with assistance from GitHub Copilot
-    Version      : 0.2 (uses IntuneToolkit Connect-IntuneGraph)
-    Requires     : Microsoft.Graph PowerShell SDK
-    Tested       : PowerShell 7.4 +, fallback to Windows PowerShell 5.1
-    License      : MIT
+    File Name      : Invoke-StaleDeviceCleanup.ps1
+    Author         : Haakon Wibe
+    Prerequisite   : Microsoft Graph PowerShell SDK
+    License        : MIT
+    Version        : 0.2
 
 .PARAMETER StaleDays
     Number of days since last Intune sync to qualify as stale (default 90).

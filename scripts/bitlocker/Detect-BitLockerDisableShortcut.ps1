@@ -7,7 +7,9 @@
     Exit 0 = installed, Exit 1 = not installed
 
 .NOTES
-    Use as detection rule in Intune Win32 app configuration.
+    Author  : Haakon Wibe
+    License : MIT
+    Context : Use as detection rule in Intune Win32 app configuration.
 #>
 
 $TaskName = "Disable-BitLocker"
