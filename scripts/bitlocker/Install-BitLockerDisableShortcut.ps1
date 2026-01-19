@@ -111,11 +111,35 @@ $sddl = 'D:(A;;FA;;;SY)(A;;FA;;;BA)(A;;GRGX;;;BU)'
 $task.SetSecurityDescriptor($sddl, 0)
 Write-Log "Granted standard users permission to run the task"
 
-# Get current logged-in user's desktop
+# Get current logged-in user's desktop (handles OneDrive Known Folder Move)
 $loggedInUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
 if ($loggedInUser) {
     $username = $loggedInUser.Split('\')[-1]
-    $userDesktop = "C:\Users\$username\Desktop"
+
+    # Get user's SID to access their registry hive
+    $userAccount = New-Object System.Security.Principal.NTAccount($loggedInUser)
+    $userSID = $userAccount.Translate([System.Security.Principal.SecurityIdentifier]).Value
+
+    # Read Desktop path from user's registry (supports OneDrive folder redirection)
+    $regPath = "Registry::HKU\$userSID\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+    $userDesktop = $null
+
+    try {
+        $desktopValue = (Get-ItemProperty -Path $regPath -Name "Desktop" -ErrorAction Stop).Desktop
+        # Expand environment variables (e.g., %USERPROFILE%)
+        $userDesktop = [Environment]::ExpandEnvironmentVariables($desktopValue)
+        Write-Log "Desktop path from registry: $userDesktop"
+    }
+    catch {
+        Write-Log "Could not read registry for user desktop"
+        $userDesktop = $null
+    }
+
+    # Fallback to Public Desktop if user desktop not found
+    if (-not $userDesktop -or -not (Test-Path $userDesktop)) {
+        $userDesktop = "C:\Users\Public\Desktop"
+        Write-Log "Using Public Desktop as fallback: $userDesktop"
+    }
 
     if (Test-Path $userDesktop) {
         $shortcutPath = Join-Path $userDesktop $ShortcutName
@@ -132,7 +156,7 @@ if ($loggedInUser) {
         Write-Log "Created desktop shortcut for user $username at $shortcutPath"
     }
     else {
-        Write-Log "WARNING: Could not find desktop for user $username"
+        Write-Log "WARNING: Could not find desktop at $userDesktop"
     }
 }
 else {

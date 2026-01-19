@@ -30,13 +30,41 @@ if ($task) {
     Write-Host "Removed scheduled task: $TaskName"
 }
 
-# Remove shortcut from all user desktops (in case user profile changed)
+# Remove shortcut from Public Desktop
+$publicShortcut = "C:\Users\Public\Desktop\$ShortcutName"
+if (Test-Path $publicShortcut) {
+    Remove-Item $publicShortcut -Force
+    Write-Host "Removed shortcut from Public Desktop"
+}
+
+# Remove shortcut from all user desktops (handles OneDrive Known Folder Move)
 $userProfiles = Get-ChildItem "C:\Users" -Directory | Where-Object { $_.Name -notin @('Public', 'Default', 'Default User') }
 foreach ($profile in $userProfiles) {
-    $shortcutPath = Join-Path $profile.FullName "Desktop\$ShortcutName"
-    if (Test-Path $shortcutPath) {
-        Remove-Item $shortcutPath -Force
-        Write-Host "Removed shortcut from $($profile.Name)'s desktop"
+    $desktopPaths = @()
+
+    # Try to get actual desktop path from user's registry
+    try {
+        $userAccount = New-Object System.Security.Principal.NTAccount("$env:COMPUTERNAME\$($profile.Name)")
+        $userSID = $userAccount.Translate([System.Security.Principal.SecurityIdentifier]).Value
+        $regPath = "Registry::HKU\$userSID\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders"
+        $desktopValue = (Get-ItemProperty -Path $regPath -Name "Desktop" -ErrorAction Stop).Desktop
+        $actualDesktop = [Environment]::ExpandEnvironmentVariables($desktopValue)
+        $desktopPaths += $actualDesktop
+    }
+    catch {
+        # Registry not accessible, continue with default path
+    }
+
+    # Also check default desktop path
+    $desktopPaths += Join-Path $profile.FullName "Desktop"
+
+    # Remove shortcut from all possible desktop locations
+    foreach ($desktop in ($desktopPaths | Select-Object -Unique)) {
+        $shortcutPath = Join-Path $desktop $ShortcutName
+        if (Test-Path $shortcutPath) {
+            Remove-Item $shortcutPath -Force
+            Write-Host "Removed shortcut from $shortcutPath"
+        }
     }
 }
 
