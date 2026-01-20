@@ -112,9 +112,35 @@ $task.SetSecurityDescriptor($sddl, 0)
 Write-Log "Granted standard users permission to run the task"
 
 # Get current logged-in user's desktop (handles OneDrive Known Folder Move)
-$loggedInUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
-if ($loggedInUser) {
-    $username = $loggedInUser.Split('\')[-1]
+# Use explorer.exe owner - more reliable than Win32_ComputerSystem on Azure AD joined devices
+$loggedInUser = $null
+$username = $null
+
+try {
+    $explorer = Get-CimInstance Win32_Process -Filter "Name='explorer.exe'" -ErrorAction Stop | Select-Object -First 1
+    if ($explorer) {
+        $ownerInfo = Invoke-CimMethod -InputObject $explorer -MethodName GetOwner -ErrorAction Stop
+        if ($ownerInfo.ReturnValue -eq 0) {
+            $loggedInUser = "$($ownerInfo.Domain)\$($ownerInfo.User)"
+            $username = $ownerInfo.User
+            Write-Log "Detected logged-in user from explorer.exe: $loggedInUser"
+        }
+    }
+}
+catch {
+    Write-Log "Could not get user from explorer.exe: $($_.Exception.Message)"
+}
+
+# Fallback to Win32_ComputerSystem if explorer method failed
+if (-not $loggedInUser) {
+    $loggedInUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
+    if ($loggedInUser) {
+        $username = $loggedInUser.Split('\')[-1]
+        Write-Log "Detected logged-in user from Win32_ComputerSystem: $loggedInUser"
+    }
+}
+
+if ($loggedInUser -and $username) {
 
     # Get user's SID to access their registry hive
     $userAccount = New-Object System.Security.Principal.NTAccount($loggedInUser)
