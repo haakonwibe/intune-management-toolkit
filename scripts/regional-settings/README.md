@@ -1,105 +1,77 @@
 # Regional Settings Deployment for Autopilot
 
-Sets Windows Region and Regional format during Autopilot enrollment (ESP Account Setup phase).
+Sets Windows Region, Regional format, and Timezone during Autopilot enrollment using Windows 11 cmdlets.
 
-## Quick Start
+## Win32 App Deployment
 
-### Option 1: Win32 App (Recommended for ESP)
+### 1. Package the files
 
-This method runs during ESP Account Setup phase, ensuring settings are applied before the user sees the desktop.
+```powershell
+IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettings.ps1" -o ".\output"
+```
 
-1. **Package the files:**
-   ```powershell
-   # Download IntuneWinAppUtil if needed
-   # https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool
+### 2. Create Win32 app in Intune
 
-   IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettings.ps1" -o ".\output"
-   ```
+| Setting | Value |
+|---------|-------|
+| Name | `Regional Settings - Norway` |
+| Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time"` |
+| Uninstall command | `cmd /c exit 0` |
+| Install behavior | **System** |
+| Detection rule | Script: `Detect-RegionalSettings.ps1` |
 
-2. **Create Win32 app in Intune:**
-   - Name: `Regional Settings - Norway` (or your region)
-   - Install command:
-     ```
-     powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -CopyToSystem -CopyToDefaultUser -CreateLogonTask
-     ```
-   - Uninstall command: `cmd /c exit 0`
-   - Install behavior: **System**
-   - Detection rule: Use `Detect-RegionalSettings.ps1` (edit expected values first)
+### 3. Assignment
 
-3. **Assignment:**
-   - Assign to **Users** (not devices) for Account Setup phase
-   - Set as **Required**
-
-4. **ESP Configuration:**
-   - In your Enrollment Status Page profile, ensure "Block device use until required apps are installed" includes this app
-
-### Option 2: Platform Script (Simpler)
-
-For scenarios where ESP timing isn't critical:
-
-1. Go to **Intune > Devices > Scripts**
-2. Add PowerShell script: `Install-RegionalSettings.ps1`
-3. Configure:
-   - Run as: **User** (for user context) or **System** (with full parameters)
-   - Parameters (in script settings): Edit the script or use a wrapper
+- Assign to **Users** as **Required** for ESP Account Setup phase
+- Assign as **Available** for Company Portal self-service
 
 ## Parameters
 
 | Parameter | Description | Example |
 |-----------|-------------|---------|
-| `-GeoId` | Geographic location ID | `177` (Norway) |
+| `-GeoId` | Geographic location ID | `177` |
 | `-Culture` | Culture/locale code | `nb-NO` |
-| `-CopyToSystem` | Apply to welcome screen (requires SYSTEM) | Switch |
-| `-CopyToDefaultUser` | Apply to new user profiles (requires SYSTEM) | Switch |
-| `-CreateLogonTask` | Create first-logon task for complete application | Switch |
+| `-TimeZone` | Windows timezone ID | `W. Europe Standard Time` |
 
-## Common GeoIDs and Cultures
+## Common Configurations
 
-| Country | GeoId | Culture |
-|---------|-------|---------|
-| Norway | 177 | nb-NO (Bokmål), nn-NO (Nynorsk) |
-| Sweden | 221 | sv-SE |
-| Denmark | 61 | da-DK |
-| Finland | 77 | fi-FI |
-| Germany | 94 | de-DE |
-| France | 84 | fr-FR |
-| UK | 242 | en-GB |
-| USA | 244 | en-US |
-| Netherlands | 176 | nl-NL |
+| Country | GeoId | Culture | TimeZone |
+|---------|-------|---------|----------|
+| Norway | 177 | nb-NO | W. Europe Standard Time |
+| Sweden | 221 | sv-SE | W. Europe Standard Time |
+| Denmark | 61 | da-DK | W. Europe Standard Time |
+| Finland | 77 | fi-FI | FLE Standard Time |
+| Germany | 94 | de-DE | W. Europe Standard Time |
+| France | 84 | fr-FR | W. Europe Standard Time |
+| UK | 242 | en-GB | GMT Standard Time |
+| USA (Eastern) | 244 | en-US | Eastern Standard Time |
+| USA (Pacific) | 244 | en-US | Pacific Standard Time |
+| Netherlands | 176 | nl-NL | W. Europe Standard Time |
 
-Full list: [Microsoft GeoID Table](https://learn.microsoft.com/en-us/windows/win32/intl/table-of-geographical-locations)
+## What the Script Does
 
-## Why Use `-CreateLogonTask`?
+Uses Windows 11 PowerShell cmdlets:
+```powershell
+Set-TimeZone -Id $TimeZone                    # Timezone
+Set-WinUILanguageOverride -Language $Culture  # UI language override
+Set-WinUserLanguageList -LanguageList ...     # Preferred language list
+Set-Culture -CultureInfo $Culture             # Regional format (date/time/number)
+Set-WinSystemLocale -SystemLocale $Culture    # System locale
+Set-WinHomeLocation -GeoId $GeoId             # Geographic location
+Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
+```
 
-Some regional settings are loaded at the start of a user session. When running during ESP:
-- Registry-based settings apply immediately
-- Some session-dependent settings need a fresh logon
+## Detection
 
-The `-CreateLogonTask` parameter creates a one-time scheduled task that:
-1. Runs at user logon
-2. Applies settings using PowerShell cmdlets (`Set-Culture`, `Set-WinHomeLocation`)
-3. Deletes itself after running
+The install script creates a marker file at:
+```
+C:\ProgramData\IntuneTools\RegionalSettings.installed
+```
 
-This ensures 100% of settings are correct from the user's perspective.
+The detection script simply checks if this file exists.
 
 ## Logs
 
-Installation logs are written to:
 ```
 C:\ProgramData\IntuneTools\RegionalSettings.log
 ```
-
-## Troubleshooting
-
-**Settings not applied:**
-- Check logs at `C:\ProgramData\IntuneTools\RegionalSettings.log`
-- Verify the app ran during ESP (check Intune app install status)
-- User may need to sign out/in for session-dependent settings
-
-**Detection fails:**
-- Edit `Detect-RegionalSettings.ps1` with correct `$ExpectedGeoId` and `$ExpectedCulture`
-- Verify values match the install command parameters
-
-**ESP timeout:**
-- The script typically runs in under 5 seconds
-- If ESP times out, check for other apps/policies causing delays
