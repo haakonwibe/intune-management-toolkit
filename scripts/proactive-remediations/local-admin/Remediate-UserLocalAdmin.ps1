@@ -9,6 +9,7 @@
 .NOTES
     Author  : Haakon Wibe
     License : MIT
+    Credits : Michael Niehaus (OOBE detection), Sandy Zeng, Peter Klapwijk
     Context : Run as SYSTEM in Intune Proactive Remediation.
     This script runs only when the detection script returns exit code 1 (non-compliant).
 #>
@@ -32,6 +33,34 @@ function Write-Log {
     Write-Host $entry
 }
 
+# Check if OOBE is complete using Windows API (credit: Michael Niehaus)
+$OOBETypeDef = @"
+using System;
+using System.Runtime.InteropServices;
+namespace Api {
+    public class Kernel32 {
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        public static extern int OOBEComplete(ref int bIsOOBEComplete);
+    }
+}
+"@
+
+try {
+    Add-Type -TypeDefinition $OOBETypeDef -Language CSharp -ErrorAction SilentlyContinue
+}
+catch {
+    # Type may already be loaded from a previous run
+}
+
+$IsOOBEComplete = $false
+$null = [Api.Kernel32]::OOBEComplete([ref]$IsOOBEComplete)
+
+if (-not $IsOOBEComplete) {
+    Write-Log "OOBE is not complete - cannot remediate until enrollment finishes"
+    Write-Host "OOBE in progress - retry later"
+    exit 1  # Failed to signal Intune to retry after OOBE completes
+}
+
 try {
     # Get currently logged-on user via CIM (works when running as SYSTEM)
     $loggedInUser = (Get-CimInstance -ClassName Win32_ComputerSystem).UserName
@@ -42,10 +71,18 @@ try {
         exit 1
     }
 
-    Write-Log "Remediation started for user: $loggedInUser"
-
     # Extract username without domain for display
     $username = $loggedInUser.Split('\')[-1]
+
+    # Secondary check: Skip known system/temporary users as a fallback
+    $skipUsers = @('defaultuser0', 'defaultuser1', 'SYSTEM', 'LOCAL SERVICE', 'NETWORK SERVICE')
+    if ($username -in $skipUsers -or $username -like 'defaultuser*') {
+        Write-Log "Skipping system/temporary user '$username' - retry later"
+        Write-Host "System user detected - retry later"
+        exit 1  # Failed to signal Intune to retry
+    }
+
+    Write-Log "Remediation started for user: $loggedInUser"
 
     # Add user to local Administrators group using the full domain\username
     # This handles both local users and domain/Azure AD users correctly
