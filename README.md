@@ -57,7 +57,8 @@ intune-management-toolkit/
     └── app-dependency-manager/                       # Azure Function for app dependency automation
         ├── host.json
         ├── requirements.psd1
-        └── run.ps1
+        ├── run.ps1
+        └── README.md
 ```
 
 ## Tools & Scripts
