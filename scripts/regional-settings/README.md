@@ -96,7 +96,10 @@ Exit code 3010 signals Intune to schedule a reboot (required for the UI language
 
 ## Uninstall
 
-The `Uninstall-RegionalSettings.ps1` script removes the detection marker and log files so Intune no longer reports the app as installed. It does **not** revert any regional or language settings that were applied.
+The `Uninstall-RegionalSettings.ps1` script restores the regional settings that were in place before installation and removes the detection marker and log files. The install script snapshots the current settings into the marker file, and the uninstall script reads them back to roll back all changes.
+
+**Restored:** timezone, culture, system locale, GeoID, user language list, UI language override.
+**Not restored:** installed language packs (no `Uninstall-Language` cmdlet exists).
 
 ## Detection
 

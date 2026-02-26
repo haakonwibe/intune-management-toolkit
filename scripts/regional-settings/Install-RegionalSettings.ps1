@@ -101,6 +101,18 @@ Write-Log "GeoId: $GeoId, Culture: $Culture, TimeZone: $TimeZone, InstallLanguag
 Write-Log "=========================================="
 
 try {
+    # Snapshot current settings for rollback
+    $UIOverride = Get-WinUILanguageOverride -ErrorAction SilentlyContinue
+    $PreviousSettings = @{
+        GeoId            = (Get-WinHomeLocation).GeoId
+        Culture          = (Get-Culture).Name
+        TimeZone         = (Get-TimeZone).Id
+        SystemLocale     = (Get-WinSystemLocale).Name
+        LanguageList     = @((Get-WinUserLanguageList).LanguageTag)
+        UILanguageOverride = if ($UIOverride) { $UIOverride.LanguageTag } else { $null }
+    }
+    Write-Log "Saved previous settings for rollback: GeoId=$($PreviousSettings.GeoId), Culture=$($PreviousSettings.Culture), TimeZone=$($PreviousSettings.TimeZone)"
+
     # Set timezone
     Set-TimeZone -Id $TimeZone
     Write-Log "Set timezone to $TimeZone"
@@ -151,14 +163,15 @@ try {
     Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
     Write-Log "Copied settings to welcome screen and new user accounts"
 
-    # Create marker file for detection
+    # Create marker file for detection (includes previous settings for rollback)
     @{
-        GeoId              = $GeoId
-        Culture            = $Culture
-        TimeZone           = $TimeZone
+        GeoId                = $GeoId
+        Culture              = $Culture
+        TimeZone             = $TimeZone
         LanguagePackInstalled = [bool]$InstallLanguagePack
-        InstalledAt        = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-    } | ConvertTo-Json | Set-Content -Path $MarkerFile -Force
+        InstalledAt          = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+        PreviousSettings     = $PreviousSettings
+    } | ConvertTo-Json -Depth 3 | Set-Content -Path $MarkerFile -Force
     Write-Log "Created marker file: $MarkerFile"
 
     Write-Log "=========================================="
