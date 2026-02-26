@@ -22,14 +22,20 @@
 $ErrorActionPreference = "Stop"
 
 $LogFolder = "C:\ProgramData\IntuneTools"
-$LogPath = Join-Path $LogFolder "RegionalSettings.log"
+$InstallLog = Join-Path $LogFolder "RegionalSettings.log"
+$UninstallLog = Join-Path $LogFolder "RegionalSettings-Uninstall.log"
 $MarkerFile = Join-Path $LogFolder "RegionalSettings.installed"
+
+# Ensure log folder exists
+if (-not (Test-Path $LogFolder)) {
+    New-Item -Path $LogFolder -ItemType Directory -Force | Out-Null
+}
 
 function Write-Log {
     param([string]$Message)
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $entry = "[$timestamp] $Message"
-    Add-Content -Path $LogPath -Value $entry -Force
+    Add-Content -Path $UninstallLog -Value $entry -Force
     Write-Host $entry
 }
 
@@ -87,15 +93,15 @@ else {
     Write-Log "No marker file found, skipping restore"
 }
 
-# Remove detection and log files
+# Remove detection and install log files
 Remove-Item -Path $MarkerFile -Force -ErrorAction SilentlyContinue
 Write-Log "Removed marker file"
+
+Remove-Item -Path $InstallLog -Force -ErrorAction SilentlyContinue
+Write-Log "Removed install log"
 
 Write-Log "=========================================="
 Write-Log "Regional Settings Uninstall Completed"
 Write-Log "=========================================="
-
-# Remove the log file last (after final log entry)
-Remove-Item -Path $LogPath -Force -ErrorAction SilentlyContinue
 
 exit 0
