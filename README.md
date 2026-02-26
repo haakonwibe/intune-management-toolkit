@@ -37,9 +37,12 @@ intune-management-toolkit/
 │   │   ├── Install-RegionalSettings.ps1              # Set region, locale & timezone during Autopilot
 │   │   └── Detect-RegionalSettings.ps1               # Detection rule for Intune
 │   ├── proactive-remediations/
-│   │   └── local-admin/
-│   │       ├── Detect-UserLocalAdmin.ps1             # Detection: check if user is local admin
-│   │       └── Remediate-UserLocalAdmin.ps1          # Remediation: add user to Administrators
+│   │   ├── local-admin/
+│   │   │   ├── Detect-UserLocalAdmin.ps1             # Detection: check if user is local admin
+│   │   │   └── Remediate-UserLocalAdmin.ps1          # Remediation: add user to Administrators
+│   │   └── location-services/
+│   │       ├── Detect-LocationServices.ps1           # Detection: check if Location Services is disabled
+│   │       └── Remediate-LocationServices.ps1        # Remediation: enable Location Services
 │   ├── Add-AutopilotCorporateIdentifiers.ps1         # Autopilot migration tool
 │   ├── Add-MgDevicesWithAppToGroup.ps1               # App‑based dynamic device grouping
 │   ├── Check-Intune-Enrollment.ps1                   # Enrollment verification
@@ -155,6 +158,20 @@ Intune Proactive Remediation package that adds the currently logged-on user to t
 | Run script in 64-bit PowerShell | Yes |
 
 **Logging:** `C:\ProgramData\IntuneTools\LocalAdmin.log`
+
+### [Location Services Proactive Remediation](./scripts/proactive-remediations/location-services/)
+Intune Proactive Remediation package that detects and re-enables system-wide Location Services. On Autopilot-provisioned devices where the OOBE privacy page is skipped, Location Services defaults to disabled and standard users cannot turn it back on.
+
+**Files:**
+- `Detect-LocationServices.ps1` – Detection script (checks the CapabilityAccessManager consent store)
+- `Remediate-LocationServices.ps1` – Remediation script (enables Location Services via `SystemSettingsAdminFlows.exe`)
+
+**Intune Deployment:**
+| Setting | Value |
+|---------|-------|
+| Run this script using the logged-on credentials | No |
+| Enforce script signature check | No |
+| Run script in 64-bit PowerShell | Yes |
 
 ### [Get-IntuneDeviceDiagnostics.ps1](./scripts/troubleshooting/Get-IntuneDeviceDiagnostics.ps1)
 Actionable per‑device diagnostics with progressive depth levels.
