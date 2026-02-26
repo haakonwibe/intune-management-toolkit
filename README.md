@@ -99,21 +99,33 @@ Reverse-resolves Application IDs (GUIDs) to their display names by querying Entr
 **Key Features:** Deduplication, service principal type reporting, CSV export.
 
 ### [Regional Settings Deployment](./scripts/regional-settings/)
-Intune Win32 app that configures Windows region, locale, timezone, and UI language during Autopilot enrollment. Runs as SYSTEM during ESP to set defaults before the user reaches the desktop.
+Intune Win32 app that configures Windows region, locale, and timezone during Autopilot enrollment. Runs as SYSTEM during ESP to set defaults before the user reaches the desktop. Two modes:
+
+- **Default** – Sets regional formats (dates, numbers, timezone, geo location) while keeping the existing OS display language (e.g. English).
+- **With `-InstallLanguagePack`** – Also downloads and installs the full language pack, switches the UI language, and exits with code 3010 to trigger a reboot.
 
 **Files:**
-- `Install-RegionalSettings.ps1` – Install script (sets GeoID, culture, timezone, UI language)
+- `Install-RegionalSettings.ps1` – Install script (regional formats + optional language pack)
 - `Detect-RegionalSettings.ps1` – Detection rule for Intune
 
-**Parameters:** `-GeoId` (geographic location), `-Culture` (locale code, e.g. `nb-NO`), `-TimeZone` (Windows timezone ID).
+**Parameters:** `-GeoId` (geographic location), `-Culture` (locale code, e.g. `nb-NO`), `-TimeZone` (Windows timezone ID), `-InstallLanguagePack` (switch to install full language pack and change UI language).
 
-**Intune Deployment:**
+**Intune Deployment (regional formats only):**
 | Setting | Value |
 |---------|-------|
 | Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time"` |
 | Uninstall command | `cmd /c exit 0` |
 | Install behavior | System |
 | Detection | Custom script → `Detect-RegionalSettings.ps1` |
+
+**Intune Deployment (full language pack):**
+| Setting | Value |
+|---------|-------|
+| Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time" -InstallLanguagePack` |
+| Uninstall command | `cmd /c exit 0` |
+| Install behavior | System |
+| Detection | Custom script → `Detect-RegionalSettings.ps1` |
+| Return codes | Add `3010` as success (hard reboot) |
 
 **Logging:** `C:\ProgramData\IntuneTools\RegionalSettings.log`
 
