@@ -18,8 +18,8 @@
     Not required when using -Init.
 
 .PARAMETER Browse
-    When specified, treats InstallerPath as a directory and presents an interactive menu
-    of discovered installers (.msi, .exe) to choose from.
+    Presents an interactive menu of discovered installers (.msi, .exe) to choose from.
+    Defaults to the current directory if InstallerPath is not specified.
 
 .PARAMETER Init
     Creates the expected environment (output folder, downloads IntuneWinAppUtil.exe if missing)
@@ -42,8 +42,12 @@
     ./New-IntuneAppPackageFromInstaller.ps1 -InstallerPath C:\Installers\notepadpp.exe -InstallCommand 'notepadpp.exe /S'
 
 .EXAMPLE
+    ./New-IntuneAppPackageFromInstaller.ps1 -Browse
+    # Interactive menu to pick from installers in the current directory
+
+.EXAMPLE
     ./New-IntuneAppPackageFromInstaller.ps1 -Browse -InstallerPath C:\Installers
-    # Interactive menu to pick from all installers in the folder
+    # Interactive menu to pick from installers in a specific folder
 #>
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
@@ -288,6 +292,7 @@ if ($Init) {
     Write-Host ""
     Write-Host "  Usage examples:" -ForegroundColor DarkGray
     Write-Host "    .\New-IntuneAppPackageFromInstaller.ps1 -InstallerPath C:\Installers\app.msi" -ForegroundColor DarkGray
+    Write-Host "    .\New-IntuneAppPackageFromInstaller.ps1 -Browse" -ForegroundColor DarkGray
     Write-Host "    .\New-IntuneAppPackageFromInstaller.ps1 -Browse -InstallerPath C:\Installers" -ForegroundColor DarkGray
     Write-Host ""
     return
@@ -295,8 +300,13 @@ if ($Init) {
 #endregion
 
 #region Browse Mode / Input Validation
+if ($Browse) {
+    # Default to current directory when -Browse is used without a path
+    if (-not $InstallerPath) { $InstallerPath = $PWD.Path }
+}
+
 if (-not $InstallerPath) {
-    Write-Error "InstallerPath is required. Use -Init to set up the environment, or -Browse -InstallerPath <folder> for interactive mode."
+    Write-Error "InstallerPath is required. Use -Init to set up the environment, or -Browse for interactive mode."
     return
 }
 
