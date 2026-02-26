@@ -18,7 +18,7 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 |---------|-------|
 | Name | `Regional Settings - Norway` |
 | Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time"` |
-| Uninstall command | `cmd /c exit 0` |
+| Uninstall command | `powershell.exe -ExecutionPolicy Bypass -File Uninstall-RegionalSettings.ps1` |
 | Install behavior | **System** |
 | Detection rule | Script: `Detect-RegionalSettings.ps1` |
 
@@ -28,7 +28,7 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 |---------|-------|
 | Name | `Language Pack - Norway` |
 | Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time" -InstallLanguagePack` |
-| Uninstall command | `cmd /c exit 0` |
+| Uninstall command | `powershell.exe -ExecutionPolicy Bypass -File Uninstall-RegionalSettings.ps1` |
 | Install behavior | **System** |
 | Detection rule | Script: `Detect-RegionalSettings.ps1` |
 | Return codes | Add `3010` as success (hard reboot) |
@@ -93,6 +93,10 @@ Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
 ```
 
 Exit code 3010 signals Intune to schedule a reboot (required for the UI language change to take effect).
+
+## Uninstall
+
+The `Uninstall-RegionalSettings.ps1` script removes the detection marker and log files so Intune no longer reports the app as installed. It does **not** revert any regional or language settings that were applied.
 
 ## Detection
 
