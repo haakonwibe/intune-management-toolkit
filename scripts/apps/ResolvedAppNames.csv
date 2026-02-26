@@ -1,0 +1,7 @@
+"ApplicationId","DisplayName","ObjectId","ServicePrincipalType","Status"
+"c44b4083-3bb0-49c1-b47d-974e53cbdf3c","Azure Portal","c5c2a623-aaff-422c-a803-858b72497ece","Application","Found"
+"00000006-0000-0ff1-ce00-000000000000","Microsoft Office 365 Portal","d2a2cf66-b81b-454c-a1a3-f1e58656a1b8","Application","Found"
+"89bee1f7-5e6e-4d8a-9f3d-ecd601259da7","NOT FOUND (Internal/Missing)","N/A","N/A","Missing"
+"d4ebce55-015a-49b5-a083-c84d1797ae8c","NOT FOUND (Internal/Missing)","N/A","N/A","Missing"
+"797f4846-ba00-4fd7-ba43-dac1f8f63013","Windows Azure Service Management API","e02faff9-0d93-4994-bd52-63534cd4d287","Application","Found"
+"fc03f97a-9db0-4627-a216-ec98ce54e018","Azure AD Notification","6432b802-d0e4-4a86-ae9f-6fe7fb32d8f2","Application","Found"

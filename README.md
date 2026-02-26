@@ -19,7 +19,10 @@ intune-management-toolkit/
 │
 ├── scripts/
 │   ├── apps/
-│   │   └── New-IntuneAppPackageFromInstaller.ps1     # Win32 app packaging helper (.intunewin)
+│   │   ├── New-IntuneAppPackageFromInstaller.ps1     # Win32 app packaging helper (.intunewin)
+│   │   ├── Get-AdminPortalIDs.ps1                    # Look up App IDs for Microsoft admin portals
+│   │   ├── Get-AppIDs.ps1                            # Bulk-resolve app names to Application IDs
+│   │   └── Get-AppNamesFromIDs.ps1                   # Reverse-resolve Application IDs to names
 │   ├── bitlocker/
 │   │   ├── Install-BitLockerDisableShortcut.ps1      # Intune app: desktop shortcut to disable BitLocker
 │   │   ├── Uninstall-BitLockerDisableShortcut.ps1    # Uninstall script for Intune
@@ -30,6 +33,9 @@ intune-management-toolkit/
 │   │   └── Invoke-StaleDeviceCleanup.ps1             # Stale / orphaned device cleanup
 │   ├── troubleshooting/
 │   │   └── Get-IntuneDeviceDiagnostics.ps1           # Multi‑level device diagnostics
+│   ├── regional-settings/
+│   │   ├── Install-RegionalSettings.ps1              # Set region, locale & timezone during Autopilot
+│   │   └── Detect-RegionalSettings.ps1               # Detection rule for Intune
 │   ├── proactive-remediations/
 │   │   └── local-admin/
 │   │       ├── Detect-UserLocalAdmin.ps1             # Detection: check if user is local admin
@@ -73,6 +79,40 @@ Simple utility for adding/removing device IDs from an Entra ID security group (s
 Automates creation of Win32 Intune (.intunewin) packages from common installer types.
 
 **Key Features:** Silent switch heuristics, detection rule scaffolding, output folder hygiene.
+
+### [Get-AdminPortalIDs.ps1](./scripts/apps/Get-AdminPortalIDs.ps1)
+Looks up Entra ID Application IDs for Microsoft admin portals (Azure, Exchange, Intune, Entra, Purview, Teams, etc.) by mapping portal names to their backing service principals.
+
+**Key Features:** Graph-based lookup, portal-to-service-principal mapping, CSV export.
+
+### [Get-AppIDs.ps1](./scripts/apps/Get-AppIDs.ps1)
+Bulk-resolves a list of Microsoft application display names to their Application IDs via the Graph API service principal catalog.
+
+**Key Features:** Progress tracking, deduplication, CSV export, handles missing apps gracefully.
+
+### [Get-AppNamesFromIDs.ps1](./scripts/apps/Get-AppNamesFromIDs.ps1)
+Reverse-resolves Application IDs (GUIDs) to their display names by querying Entra ID service principals.
+
+**Key Features:** Deduplication, service principal type reporting, CSV export.
+
+### [Regional Settings Deployment](./scripts/regional-settings/)
+Intune Win32 app that configures Windows region, locale, timezone, and UI language during Autopilot enrollment. Runs as SYSTEM during ESP to set defaults before the user reaches the desktop.
+
+**Files:**
+- `Install-RegionalSettings.ps1` – Install script (sets GeoID, culture, timezone, UI language)
+- `Detect-RegionalSettings.ps1` – Detection rule for Intune
+
+**Parameters:** `-GeoId` (geographic location), `-Culture` (locale code, e.g. `nb-NO`), `-TimeZone` (Windows timezone ID).
+
+**Intune Deployment:**
+| Setting | Value |
+|---------|-------|
+| Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time"` |
+| Uninstall command | `cmd /c exit 0` |
+| Install behavior | System |
+| Detection | Custom script → `Detect-RegionalSettings.ps1` |
+
+**Logging:** `C:\ProgramData\IntuneTools\RegionalSettings.log`
 
 ### [Get-IntuneComplianceReport.ps1](./scripts/compliance/Get-IntuneComplianceReport.ps1)
 Generates an HTML (and optional JSON) compliance dashboard with device counts, state breakdown, and issue flags.
