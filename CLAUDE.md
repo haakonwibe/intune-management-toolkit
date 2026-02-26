@@ -64,6 +64,7 @@ Scripts use the IntuneToolkit module's permission presets:
 - **compliance/**: Compliance reporting and analysis
 - **devices/**: Device lifecycle management (cleanup, diagnostics)
 - **regional-settings/**: Intune Win32 app for configuring region, locale & timezone during Autopilot
+- **language-packs/**: Per-language Win32 apps for installing language packs during Autopilot (13 languages, each with install + detection script)
 - **proactive-remediations/**: Intune Proactive Remediation packages (detection + remediation scripts)
 - **troubleshooting/**: Deep device diagnostics with progressive detail levels
 

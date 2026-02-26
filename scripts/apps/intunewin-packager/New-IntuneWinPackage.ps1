@@ -323,11 +323,27 @@ if ($PSCmdlet.ShouldProcess("$AppName ($SetupFile)", "Package with IntuneWinAppU
         Write-Host ""
         Write-Host "Packaging complete!" -ForegroundColor Green
 
-        # Show the output file
+        # Find the output file and rename it to include the app folder name
+        # IntuneWinAppUtil names output after the setup file (e.g. 7z2409-x64.intunewin),
+        # which makes it hard to identify once you have many packages. Rename to
+        # AppName_SetupFile.intunewin (e.g. 7-Zip EXE_7z2409-x64.intunewin).
         $outputFiles = Get-ChildItem -Path $OutputFolder -Filter "*.intunewin" |
                        Sort-Object LastWriteTime -Descending |
                        Select-Object -First 1
         if ($outputFiles) {
+            $setupBaseName = [System.IO.Path]::GetFileNameWithoutExtension($SetupFile)
+            $desiredName = "${AppName}_${setupBaseName}.intunewin"
+            $desiredPath = Join-Path $OutputFolder $desiredName
+
+            if ($outputFiles.Name -ne $desiredName) {
+                # Remove existing file with the target name if present (from a previous run)
+                if (Test-Path $desiredPath) {
+                    Remove-Item -Path $desiredPath -Force
+                }
+                Rename-Item -Path $outputFiles.FullName -NewName $desiredName
+                $outputFiles = Get-Item -Path $desiredPath
+            }
+
             $size = [math]::Round($outputFiles.Length / 1MB, 2)
             Write-Host "Output: $($outputFiles.FullName) ($size MB)" -ForegroundColor Green
         }
