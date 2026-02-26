@@ -97,18 +97,7 @@ function Find-IntuneWinAppUtil {
     $candidate = Join-Path $PSScriptRoot 'IntuneWinAppUtil.exe'
     if (Test-Path $candidate) { return $candidate }
 
-    # 2. Environment variable override
-    if ($env:INTUNEWIN_TOOL_PATH -and (Test-Path $env:INTUNEWIN_TOOL_PATH)) {
-        $p = $env:INTUNEWIN_TOOL_PATH
-        if ((Get-Item $p).PSIsContainer) { $p = Join-Path $p 'IntuneWinAppUtil.exe' }
-        if (Test-Path $p) { return $p }
-    }
-
-    # 3. Legacy hardcoded path
-    $legacy = 'C:\Tools\IntuneWinAppUtil\IntuneWinAppUtil.exe'
-    if (Test-Path $legacy) { return $legacy }
-
-    # 4. Persistent local app data cache
+    # 2. Persistent local app data cache (auto-download location)
     $localCache = Join-Path $env:LOCALAPPDATA 'IntuneWinAppUtil\IntuneWinAppUtil.exe'
     if (Test-Path $localCache) { return $localCache }
 
@@ -294,9 +283,7 @@ if ($Init) {
     Write-Host ""
     Write-Host "  Tool search order:" -ForegroundColor DarkGray
     Write-Host "    1. $PSScriptRoot\IntuneWinAppUtil.exe" -ForegroundColor DarkGray
-    Write-Host "    2. %INTUNEWIN_TOOL_PATH% (environment variable)" -ForegroundColor DarkGray
-    Write-Host "    3. C:\Tools\IntuneWinAppUtil\IntuneWinAppUtil.exe" -ForegroundColor DarkGray
-    Write-Host "    4. %LOCALAPPDATA%\IntuneWinAppUtil\IntuneWinAppUtil.exe (auto-download)" -ForegroundColor DarkGray
+    Write-Host "    2. %LOCALAPPDATA%\IntuneWinAppUtil\IntuneWinAppUtil.exe (auto-download)" -ForegroundColor DarkGray
 
     Write-Host ""
     Write-Host "  Usage examples:" -ForegroundColor DarkGray
