@@ -113,5 +113,6 @@ The detection script simply checks if this file exists.
 ## Logs
 
 ```
-C:\ProgramData\IntuneTools\RegionalSettings.log
+C:\ProgramData\IntuneTools\RegionalSettings.log              # Install log (removed on uninstall)
+C:\ProgramData\IntuneTools\RegionalSettings-Uninstall.log    # Uninstall log (persists)
 ```
