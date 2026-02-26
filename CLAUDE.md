@@ -58,7 +58,7 @@ Scripts use the IntuneToolkit module's permission presets:
 ### Script Categories
 - **apps/**: Win32 app packaging, deployment helpers, and Application ID lookup utilities
   - `intunewin-packager/`: IntuneWinAppUtil.exe wrapper with Explorer launcher
-  - `intunewin-builder/`: Advanced .intunewin package builder from installers
+  - `intunewin-builder/`: Advanced .intunewin package builder with metadata extraction (-Init, -Browse)
   - `app-id-lookup/`: Microsoft app name/ID resolution scripts
 - **bitlocker/**: Intune Win32 app for user-initiated BitLocker disable (Autopilot reset prep)
 - **compliance/**: Compliance reporting and analysis

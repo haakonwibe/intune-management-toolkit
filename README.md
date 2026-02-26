@@ -92,9 +92,11 @@ Wrapper around `IntuneWinAppUtil.exe` for quick `.intunewin` packaging. Includes
 - `Package-App.cmd` – Explorer launcher
 
 ### [New-IntuneAppPackageFromInstaller.ps1](./scripts/apps/intunewin-builder/New-IntuneAppPackageFromInstaller.ps1)
-Automates creation of Win32 Intune (.intunewin) packages from common installer types.
+Automates creation of Win32 Intune (.intunewin) packages from common installer types with metadata extraction and detection scaffolding.
 
-**Key Features:** Silent switch heuristics, detection rule scaffolding, output folder hygiene.
+**Key Features:** MSI metadata extraction, EXE heuristic detection (InnoSetup/NSIS/InstallShield), silent switch suggestions, Metadata.json + DetectionScript.ps1 generation, auto-downloads IntuneWinAppUtil.exe.
+
+**Flags:** `-Init` (environment setup & tool download), `-Browse` (interactive installer selection from a folder).
 
 ### [App ID Lookup](./scripts/apps/app-id-lookup/)
 Scripts to resolve Microsoft application names and IDs via the Graph API service principal catalog.

@@ -8,15 +8,15 @@
     the standard Intune packaging folder structure:
 
         C:\Intune\
-        ├── IntuneWinAppUtil.exe
-        ├── New-IntuneWinPackage.ps1   (this script)
-        ├── Apps\
-        │   ├── 7-Zip EXE\
-        │   │   └── 7z2409-x64.exe
-        │   └── CMTrace\
-        │       └── CMTrace.exe
-        ├── Output\
-        └── Logo\
+        +-- IntuneWinAppUtil.exe
+        +-- New-IntuneWinPackage.ps1   (this script)
+        +-- Apps\
+        |   +-- 7-Zip EXE\
+        |   |   +-- 7z2409-x64.exe
+        |   +-- CMTrace\
+        |       +-- CMTrace.exe
+        +-- Output\
+        +-- Logo\
 
 .PARAMETER AppName
     Name of the app folder under .\Apps\. If omitted, an interactive menu is shown.
@@ -46,7 +46,7 @@
 
 .EXAMPLE
     .\New-IntuneWinPackage.ps1
-    # Interactive mode — pick from discovered apps
+    # Interactive mode - pick from discovered apps
 
 .EXAMPLE
     .\New-IntuneWinPackage.ps1 -AppName "7-Zip EXE"
@@ -154,7 +154,7 @@ if ($problems.Count -gt 0) {
         @{ Name = "IntuneWinAppUtil.exe"; Exists = $hasToolExe;    Hint = "Download from: https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool" }
         @{ Name = "Apps\";               Exists = $hasAppsFolder;  Hint = "Create this folder and add app subfolders with installers" }
         @{ Name = "Output\";             Exists = (Test-Path $DefaultOutput); Hint = "Will be created automatically when packaging" }
-        @{ Name = "Logo\";               Exists = (Test-Path (Join-Path $IntuneRoot "Logo")); Hint = "Optional — store app logos here for easy reference" }
+        @{ Name = "Logo\";               Exists = (Test-Path (Join-Path $IntuneRoot "Logo")); Hint = "Optional - store app logos here for easy reference" }
     )
 
     foreach ($item in $items) {
@@ -352,7 +352,7 @@ if ($PSCmdlet.ShouldProcess("$AppName ($SetupFile)", "Package with IntuneWinAppU
                 Write-Host "Logo:   $($matchedLogo.FullName)" -ForegroundColor Magenta
             }
             else {
-                # No match — list what's available
+                # No match - list what's available
                 $availableLogos = Get-ChildItem -Path $logoFolder -File |
                                   Where-Object { $logoExtensions -contains $_.Extension }
                 if ($availableLogos.Count -gt 0) {

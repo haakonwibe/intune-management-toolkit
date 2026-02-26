@@ -4,31 +4,50 @@
 
 .DESCRIPTION
     Automates:
-      * Ensures Microsoft Win32 Content Prep Tool is downloaded & available (C:\Tools\IntuneWinAppUtil) – latest release.
+      * Locates Microsoft Win32 Content Prep Tool (script folder, env var, legacy path) or downloads latest release.
       * Extracts MSI metadata (Name, Version, ProductCode, Manufacturer) for naming & detection.
       * EXE heuristic detection (InstallShield / Inno Setup / NSIS / Wise / Squirrel / MSI wrapper) to propose silent switches.
       * Generates install / uninstall command defaults (override via parameters).
       * Builds .intunewin using IntuneWinAppUtil.exe.
-      * Produces side‑car Metadata.json (+ optional DetectionScript.ps1) to aid portal import.
+      * Produces side-car Metadata.json (+ optional DetectionScript.ps1) to aid portal import.
 
-    Supports PowerShell 7+ and Windows PowerShell 5.1 (no PS7‑only syntax used).
+    Supports PowerShell 7+ and Windows PowerShell 5.1 (no PS7-only syntax used).
+
+.PARAMETER InstallerPath
+    Path to the installer file (.msi or .exe), or a directory when used with -Browse.
+    Not required when using -Init.
+
+.PARAMETER Browse
+    When specified, treats InstallerPath as a directory and presents an interactive menu
+    of discovered installers (.msi, .exe) to choose from.
+
+.PARAMETER Init
+    Creates the expected environment (output folder, downloads IntuneWinAppUtil.exe if missing)
+    and shows a status report. Use this when setting up a new packaging workstation.
 
 .NOTES
     File Name      : New-IntuneAppPackageFromInstaller.ps1
     Author         : Haakon Wibe
     License        : MIT
-    Version        : 1.0.0
+    Version        : 1.1.0
+
+.EXAMPLE
+    ./New-IntuneAppPackageFromInstaller.ps1 -Init
+    # Set up the environment and download IntuneWinAppUtil.exe if needed
 
 .EXAMPLE
     ./New-IntuneAppPackageFromInstaller.ps1 -InstallerPath C:\Installers\7zip.msi
 
 .EXAMPLE
     ./New-IntuneAppPackageFromInstaller.ps1 -InstallerPath C:\Installers\notepadpp.exe -InstallCommand 'notepadpp.exe /S'
+
+.EXAMPLE
+    ./New-IntuneAppPackageFromInstaller.ps1 -Browse -InstallerPath C:\Installers
+    # Interactive menu to pick from all installers in the folder
 #>
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
-    [Parameter(Mandatory, Position=0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-    [ValidateScript({ Test-Path $_ })]
+    [Parameter(Position=0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
     [string]$InstallerPath,
 
     [Parameter()] [string]$OutputPath,
@@ -43,13 +62,17 @@ param(
     [Parameter()] [string]$RegistryDetectionValueName,
     [Parameter()] [string]$RegistryDetectionValueData,
     [Parameter()] [string]$CustomDetectionScriptPath,
+    [switch]$Browse,
+    [switch]$Init,
     [switch]$Quiet
 )
 
 #region Helper Imports / Environment
 $script:ScriptName = Split-Path -Leaf $PSCommandPath
-$script:ToolRoot   = 'C:\Tools\IntuneWinAppUtil'
 $ErrorActionPreference = 'Stop'
+
+# Installer file extensions (in priority order)
+$script:InstallerExtensions = @('.msi', '.exe')
 
 # Import IntuneToolkit for logging (fallback to Write-Host if missing)
 $modulePath = Join-Path -Path $PSScriptRoot -ChildPath '../../modules/IntuneToolkit/IntuneToolkit.psm1'
@@ -61,14 +84,56 @@ if (-not (Get-Command Write-IntuneLog -ErrorAction SilentlyContinue)) {
 }
 #endregion
 
-#region Functions
-function Get-LatestWin32ContentPrepTool {
+#region Tool Path Resolution
+function Find-IntuneWinAppUtil {
+    <#
+    .SYNOPSIS
+        Searches for IntuneWinAppUtil.exe in well-known locations.
+        Returns the path if found, $null otherwise.
+    #>
     [CmdletBinding()] param()
-    if (-not (Test-Path $script:ToolRoot)) { New-Item -ItemType Directory -Path $script:ToolRoot -Force | Out-Null }
-    $exePath = Join-Path $script:ToolRoot 'IntuneWinAppUtil.exe'
-    if (Test-Path $exePath) { return $exePath }
 
-    Write-IntuneLog -Message 'IntuneWinAppUtil.exe not found. Downloading latest release...' -Level Info
+    # 1. Same folder as this script
+    $candidate = Join-Path $PSScriptRoot 'IntuneWinAppUtil.exe'
+    if (Test-Path $candidate) { return $candidate }
+
+    # 2. Environment variable override
+    if ($env:INTUNEWIN_TOOL_PATH -and (Test-Path $env:INTUNEWIN_TOOL_PATH)) {
+        $p = $env:INTUNEWIN_TOOL_PATH
+        if ((Get-Item $p).PSIsContainer) { $p = Join-Path $p 'IntuneWinAppUtil.exe' }
+        if (Test-Path $p) { return $p }
+    }
+
+    # 3. Legacy hardcoded path
+    $legacy = 'C:\Tools\IntuneWinAppUtil\IntuneWinAppUtil.exe'
+    if (Test-Path $legacy) { return $legacy }
+
+    # 4. Persistent local app data cache
+    $localCache = Join-Path $env:LOCALAPPDATA 'IntuneWinAppUtil\IntuneWinAppUtil.exe'
+    if (Test-Path $localCache) { return $localCache }
+
+    return $null
+}
+
+function Get-LatestWin32ContentPrepTool {
+    <#
+    .SYNOPSIS
+        Finds IntuneWinAppUtil.exe locally, or downloads the latest release from GitHub.
+    #>
+    [CmdletBinding()] param()
+
+    $existing = Find-IntuneWinAppUtil
+    if ($existing) {
+        Write-IntuneLog -Message "Found IntuneWinAppUtil.exe: $existing" -Level Debug
+        return $existing
+    }
+
+    # Download to persistent local cache
+    $toolRoot = Join-Path $env:LOCALAPPDATA 'IntuneWinAppUtil'
+    if (-not (Test-Path $toolRoot)) { New-Item -ItemType Directory -Path $toolRoot -Force | Out-Null }
+    $exePath = Join-Path $toolRoot 'IntuneWinAppUtil.exe'
+
+    Write-IntuneLog -Message 'IntuneWinAppUtil.exe not found locally. Downloading latest release...' -Level Info
     $releaseApi = 'https://api.github.com/repos/microsoft/Microsoft-Win32-Content-Prep-Tool/releases/latest'
     try {
         $headers = @{ 'User-Agent' = 'intune-management-toolkit'; 'Accept'='application/vnd.github+json' }
@@ -80,7 +145,7 @@ function Get-LatestWin32ContentPrepTool {
             $asset = $release.assets | Where-Object { $_.name -match '\.zip$' } | Select-Object -First 1
         }
 
-        $tempZip = Join-Path $script:ToolRoot 'Win32ContentPrepTool.zip'
+        $tempZip = Join-Path $toolRoot 'Win32ContentPrepTool.zip'
         if ($asset) {
             Write-IntuneLog -Message "Downloading asset: $($asset.name)" -Level Info
             Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tempZip -UseBasicParsing -Headers $headers
@@ -91,7 +156,7 @@ function Get-LatestWin32ContentPrepTool {
         }
 
         Write-IntuneLog -Message 'Expanding archive...' -Level Info
-        $expandPath = Join-Path $script:ToolRoot 'extract_tmp'
+        $expandPath = Join-Path $toolRoot 'extract_tmp'
         if (Test-Path $expandPath) { Remove-Item $expandPath -Recurse -Force }
         Expand-Archive -Path $tempZip -DestinationPath $expandPath -Force
         Remove-Item $tempZip -Force -ErrorAction SilentlyContinue
@@ -100,7 +165,6 @@ function Get-LatestWin32ContentPrepTool {
         $found = Get-ChildItem -Path $expandPath -Filter 'IntuneWinAppUtil.exe' -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1
         if (-not $found) { throw 'IntuneWinAppUtil.exe not located inside extracted archive.' }
         Copy-Item -Path $found.FullName -Destination $exePath -Force
-        # Clean extraction folder after copy
         Remove-Item $expandPath -Recurse -Force -ErrorAction SilentlyContinue
 
         if (-not (Test-Path $exePath)) { throw 'Extraction completed but executable still missing.' }
@@ -110,7 +174,9 @@ function Get-LatestWin32ContentPrepTool {
         throw "Failed to acquire Microsoft Win32 Content Prep Tool: $_"
     }
 }
+#endregion
 
+#region Functions
 function Get-MSIMetadata {
     [CmdletBinding()] param([string]$Path)
     $installer = New-Object -ComObject WindowsInstaller.Installer
@@ -190,6 +256,117 @@ function New-DetectionMetadata {
         'Script'   { $rules += @{ Type='Script'; ScriptFile='DetectionScript.ps1' } }
     }
     return @{ Method=$ChosenMethod; Rules=$rules; Source=$InstallerMetadata }
+}
+#endregion
+
+#region Init Mode
+if ($Init) {
+    Write-Host ""
+    Write-Host "=== Intune App Builder - Environment Setup ===" -ForegroundColor Cyan
+    Write-Host ""
+
+    # Check IntuneWinAppUtil.exe
+    $toolFound = Find-IntuneWinAppUtil
+    if ($toolFound) {
+        Write-Host "  [OK]      IntuneWinAppUtil.exe" -ForegroundColor Green
+        Write-Host "            $toolFound" -ForegroundColor DarkGray
+    } else {
+        Write-Host "  [Missing] IntuneWinAppUtil.exe" -ForegroundColor Yellow
+        Write-Host "            Attempting download..." -ForegroundColor DarkGray
+        try {
+            $downloaded = Get-LatestWin32ContentPrepTool
+            Write-Host "  [OK]      Downloaded to: $downloaded" -ForegroundColor Green
+        } catch {
+            Write-Host "  [Failed]  $_" -ForegroundColor Red
+            Write-Host "            Download manually: https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool" -ForegroundColor DarkGray
+        }
+    }
+
+    # Check IntuneToolkit module
+    Write-Host ""
+    if (Get-Command Write-IntuneLog -ErrorAction SilentlyContinue) {
+        Write-Host "  [OK]      IntuneToolkit module loaded" -ForegroundColor Green
+    } else {
+        Write-Host "  [Info]    IntuneToolkit module not found (using built-in logging)" -ForegroundColor DarkGray
+    }
+
+    # Show search order
+    Write-Host ""
+    Write-Host "  Tool search order:" -ForegroundColor DarkGray
+    Write-Host "    1. $PSScriptRoot\IntuneWinAppUtil.exe" -ForegroundColor DarkGray
+    Write-Host "    2. %INTUNEWIN_TOOL_PATH% (environment variable)" -ForegroundColor DarkGray
+    Write-Host "    3. C:\Tools\IntuneWinAppUtil\IntuneWinAppUtil.exe" -ForegroundColor DarkGray
+    Write-Host "    4. %LOCALAPPDATA%\IntuneWinAppUtil\IntuneWinAppUtil.exe (auto-download)" -ForegroundColor DarkGray
+
+    Write-Host ""
+    Write-Host "  Usage examples:" -ForegroundColor DarkGray
+    Write-Host "    .\New-IntuneAppPackageFromInstaller.ps1 -InstallerPath C:\Installers\app.msi" -ForegroundColor DarkGray
+    Write-Host "    .\New-IntuneAppPackageFromInstaller.ps1 -Browse -InstallerPath C:\Installers" -ForegroundColor DarkGray
+    Write-Host ""
+    return
+}
+#endregion
+
+#region Browse Mode / Input Validation
+if (-not $InstallerPath) {
+    Write-Error "InstallerPath is required. Use -Init to set up the environment, or -Browse -InstallerPath <folder> for interactive mode."
+    return
+}
+
+if ($Browse -or (Test-Path $InstallerPath -PathType Container)) {
+    $searchPath = if (Test-Path $InstallerPath -PathType Container) { $InstallerPath } else { Split-Path $InstallerPath -Parent }
+    if (-not (Test-Path $searchPath)) {
+        Write-Error "Directory not found: $searchPath"
+        return
+    }
+
+    $installers = Get-ChildItem -Path $searchPath -File |
+                  Where-Object { $script:InstallerExtensions -contains $_.Extension.ToLowerInvariant() } |
+                  Sort-Object {
+                      $idx = $script:InstallerExtensions.IndexOf($_.Extension.ToLowerInvariant())
+                      if ($idx -ge 0) { $idx } else { 999 }
+                  }
+
+    if ($installers.Count -eq 0) {
+        Write-Host ""
+        Write-Host "=== No Installers Found ===" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  No .msi or .exe files in: $searchPath" -ForegroundColor DarkGray
+        Write-Host ""
+        return
+    }
+    elseif ($installers.Count -eq 1) {
+        $InstallerPath = $installers[0].FullName
+        Write-Host "Auto-selected: $($installers[0].Name)" -ForegroundColor Green
+    }
+    else {
+        Write-Host ""
+        Write-Host "=== Select Installer ===" -ForegroundColor Cyan
+        Write-Host "  Directory: $searchPath" -ForegroundColor DarkGray
+        Write-Host ""
+        for ($i = 0; $i -lt $installers.Count; $i++) {
+            $inst = $installers[$i]
+            $size = [math]::Round($inst.Length / 1MB, 2)
+            Write-Host "  [$($i + 1)] $($inst.Name)" -ForegroundColor Yellow -NoNewline
+            Write-Host "  ($size MB, $($inst.LastWriteTime.ToString('yyyy-MM-dd')))" -ForegroundColor DarkGray
+        }
+
+        Write-Host ""
+        $selection = Read-Host "Select installer (1-$($installers.Count))"
+
+        if ($selection -match '^\d+$' -and [int]$selection -ge 1 -and [int]$selection -le $installers.Count) {
+            $InstallerPath = $installers[[int]$selection - 1].FullName
+        }
+        else {
+            Write-Error "Invalid selection."
+            return
+        }
+    }
+}
+
+if (-not (Test-Path $InstallerPath)) {
+    Write-Error "Installer not found: $InstallerPath"
+    return
 }
 #endregion
 
@@ -287,7 +464,7 @@ if ($PSCmdlet.ShouldProcess($expectedWinFile,'Create .intunewin package')) {
             $toolOutput2 = & $toolPath -c $sourceDir -s $setupFile -o $intuneWinOutputDir 2>&1
             $exitCode2 = $LASTEXITCODE
             Write-IntuneLog -Message "Retry exit code: $exitCode2" -Level Debug
-            if ($toolOutput2) { Write-Warning ("IntuneWinAppUtil (retry) output:\n" + ($toolOutput2 -join [Environment]::NewLine)) }
+            if ($toolOutput2) { Write-Warning ("IntuneWinAppUtil (retry) output:`n" + ($toolOutput2 -join [Environment]::NewLine)) }
             $produced = Get-ChildItem -Path $intuneWinOutputDir -Filter ($setupFile + '.intunewin') -ErrorAction SilentlyContinue | Select-Object -First 1
             if (-not $produced) {
                 $produced = Get-ChildItem -Path $intuneWinOutputDir -Filter '*.intunewin' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -349,15 +526,57 @@ if ($PSCmdlet.ShouldProcess($metadataPath,'Write metadata JSON')) {
     Write-IntuneLog -Message "Metadata exported: $metadataPath" -Level Success
 }
 
+#region Summary
 Write-IntuneLog -Message 'Summary:' -Level Info
 Write-Host (' App Name      : {0}' -f $AppName)
 Write-Host (' Publisher     : {0}' -f $Publisher)
 Write-Host (' Version       : {0}' -f $installerMeta.ProductVersion)
 Write-Host (' InstallerType : {0}' -f $metadata.InstallerType)
 Write-Host (' Package File  : {0}' -f $expectedWinFile)
+
+# Show package file size
+if (Test-Path $expectedWinFile) {
+    $pkgSize = [math]::Round((Get-Item $expectedWinFile).Length / 1MB, 2)
+    Write-Host (' Package Size  : {0} MB' -f $pkgSize)
+}
+
 Write-Host (' Metadata File : {0}' -f $metadataPath)
 Write-Host (' Detection     : {0}' -f $detectionMetadata.Method)
 if ($installerMeta.SilentSwitchHints) { Write-Host (' Silent Hints  : {0}' -f ($installerMeta.SilentSwitchHints -join ', ')) }
+
+# Logo matching - check for a Logo folder near the output
+$logoSearchPaths = @(
+    (Join-Path (Split-Path $OutputPath -Parent) 'Logo')
+    (Join-Path $PSScriptRoot 'Logo')
+)
+$logoFolder = $logoSearchPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+if ($logoFolder) {
+    $logoExtensions = @('.png', '.jpg', '.jpeg', '.svg', '.ico')
+    $appNameNormalized = ($AppName -replace '[^a-zA-Z0-9]', '').ToLower()
+    $matchedLogo = Get-ChildItem -Path $logoFolder -File |
+                   Where-Object { $logoExtensions -contains $_.Extension.ToLowerInvariant() } |
+                   Where-Object {
+                       $fileNormalized = ($_.BaseName -replace '[^a-zA-Z0-9]', '').ToLower()
+                       $fileNormalized -like "*$appNameNormalized*" -or $appNameNormalized -like "*$fileNormalized*"
+                   } |
+                   Select-Object -First 1
+
+    if ($matchedLogo) {
+        Write-Host (' Logo          : {0}' -f $matchedLogo.FullName) -ForegroundColor Magenta
+    } else {
+        $availableLogos = Get-ChildItem -Path $logoFolder -File |
+                          Where-Object { $logoExtensions -contains $_.Extension.ToLowerInvariant() }
+        if ($availableLogos.Count -gt 0) {
+            Write-Host ""
+            Write-Host " No matching logo for '$AppName'. Available:" -ForegroundColor DarkYellow
+            foreach ($logo in $availableLogos) {
+                Write-Host ("   $($logo.Name)") -ForegroundColor DarkGray
+            }
+        }
+    }
+}
+#endregion
 
 Write-IntuneLog -Message 'Completed.' -Level Success
 #endregion
