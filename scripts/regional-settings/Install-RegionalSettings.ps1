@@ -6,6 +6,10 @@
     Configures regional settings (GeoID, culture/locale, timezone) using Windows 11 cmdlets.
     Designed to run as SYSTEM during ESP to set defaults before user sees the desktop.
 
+    By default only regional formats are changed (dates, numbers, timezone, geo location)
+    while keeping the existing OS display language. Use -InstallLanguagePack to also download
+    and install the full language pack and switch the UI language.
+
 .PARAMETER GeoId
     The geographic location ID. Examples: 177 (Norway), 244 (United States), 94 (Germany).
     See: https://learn.microsoft.com/en-us/windows/win32/intl/table-of-geographical-locations
@@ -17,9 +21,18 @@
     The Windows timezone ID. Examples: "W. Europe Standard Time" (Norway), "Pacific Standard Time" (US West).
     Run Get-TimeZone -ListAvailable to see all options.
 
+.PARAMETER InstallLanguagePack
+    When specified, downloads and installs the full language pack for the Culture via
+    Install-Language, sets the UI language override, and makes the culture the primary
+    language in the preferred list. Requires a reboot (exits with code 3010).
+
 .EXAMPLE
     .\Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time"
-    Sets regional settings to Norway/Norwegian Bokmål with Central European timezone.
+    Sets regional formats to Norwegian on an English OS without changing the display language.
+
+.EXAMPLE
+    .\Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time" -InstallLanguagePack
+    Installs the nb-NO language pack, switches the UI language, and sets all regional formats. Exits 3010 to trigger reboot.
 
 .NOTES
     Author  : Haakon Wibe
@@ -55,7 +68,10 @@ param(
     [string]$Culture,
 
     [Parameter(Mandatory = $true)]
-    [string]$TimeZone
+    [string]$TimeZone,
+
+    [Parameter()]
+    [switch]$InstallLanguagePack
 )
 
 $ErrorActionPreference = "Stop"
@@ -81,7 +97,7 @@ function Write-Log {
 # Main execution
 Write-Log "=========================================="
 Write-Log "Regional Settings Installation Started"
-Write-Log "GeoId: $GeoId, Culture: $Culture, TimeZone: $TimeZone"
+Write-Log "GeoId: $GeoId, Culture: $Culture, TimeZone: $TimeZone, InstallLanguagePack: $InstallLanguagePack"
 Write-Log "=========================================="
 
 try {
@@ -89,16 +105,35 @@ try {
     Set-TimeZone -Id $TimeZone
     Write-Log "Set timezone to $TimeZone"
 
-    # Set UI language override
-    Set-WinUILanguageOverride -Language $Culture
-    Write-Log "Set UI language override to $Culture"
+    if ($InstallLanguagePack) {
+        # Install full language pack from Microsoft CDN
+        Write-Log "Installing language pack for $Culture (this may take 10-20 minutes)..."
+        Install-Language -Language $Culture -CopyToSettings
+        Write-Log "Language pack for $Culture installed successfully"
 
-    # Set preferred language list (adds to existing, making new language first)
-    $OldList = Get-WinUserLanguageList
-    $UserLanguageList = New-WinUserLanguageList -Language $Culture
-    $UserLanguageList += $OldList | Where-Object { $_.LanguageTag -ne $Culture }
-    Set-WinUserLanguageList -LanguageList $UserLanguageList -Force
-    Write-Log "Set user language list with $Culture as primary"
+        # Set UI language override to the new language
+        Set-WinUILanguageOverride -Language $Culture
+        Write-Log "Set UI language override to $Culture"
+
+        # Set preferred language list with new language as primary
+        $OldList = Get-WinUserLanguageList
+        $UserLanguageList = New-WinUserLanguageList -Language $Culture
+        $UserLanguageList += $OldList | Where-Object { $_.LanguageTag -ne $Culture }
+        Set-WinUserLanguageList -LanguageList $UserLanguageList -Force
+        Write-Log "Set user language list with $Culture as primary"
+    }
+    else {
+        # Regional formats only — append culture to language list without changing display language
+        $UserLanguageList = Get-WinUserLanguageList
+        if (-not ($UserLanguageList | Where-Object { $_.LanguageTag -eq $Culture })) {
+            $UserLanguageList += New-WinUserLanguageList -Language $Culture
+            Set-WinUserLanguageList -LanguageList $UserLanguageList -Force
+            Write-Log "Added $Culture to end of user language list (existing display language unchanged)"
+        }
+        else {
+            Write-Log "User language list already contains $Culture, no change needed"
+        }
+    }
 
     # Set regional format (date, time, number formats)
     Set-Culture -CultureInfo $Culture
@@ -118,16 +153,22 @@ try {
 
     # Create marker file for detection
     @{
-        GeoId    = $GeoId
-        Culture  = $Culture
-        TimeZone = $TimeZone
-        InstalledAt = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+        GeoId              = $GeoId
+        Culture            = $Culture
+        TimeZone           = $TimeZone
+        LanguagePackInstalled = [bool]$InstallLanguagePack
+        InstalledAt        = (Get-Date -Format "yyyy-MM-dd HH:mm:ss")
     } | ConvertTo-Json | Set-Content -Path $MarkerFile -Force
     Write-Log "Created marker file: $MarkerFile"
 
     Write-Log "=========================================="
     Write-Log "Regional settings installation completed"
     Write-Log "=========================================="
+
+    if ($InstallLanguagePack) {
+        Write-Log "Exiting with code 3010 (reboot required for language pack)"
+        exit 3010
+    }
     exit 0
 }
 catch {

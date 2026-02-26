@@ -1,6 +1,6 @@
 # Regional Settings Deployment for Autopilot
 
-Sets Windows Region, Regional format, and Timezone during Autopilot enrollment using Windows 11 cmdlets.
+Sets Windows Region, Regional format, and Timezone during Autopilot enrollment using Windows 11 cmdlets. Optionally installs a full language pack to switch the OS display language.
 
 ## Win32 App Deployment
 
@@ -12,6 +12,8 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 
 ### 2. Create Win32 app in Intune
 
+**Regional formats only** (keeps English UI):
+
 | Setting | Value |
 |---------|-------|
 | Name | `Regional Settings - Norway` |
@@ -19,6 +21,17 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 | Uninstall command | `cmd /c exit 0` |
 | Install behavior | **System** |
 | Detection rule | Script: `Detect-RegionalSettings.ps1` |
+
+**Full language pack** (switches UI to Norwegian):
+
+| Setting | Value |
+|---------|-------|
+| Name | `Language Pack - Norway` |
+| Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time" -InstallLanguagePack` |
+| Uninstall command | `cmd /c exit 0` |
+| Install behavior | **System** |
+| Detection rule | Script: `Detect-RegionalSettings.ps1` |
+| Return codes | Add `3010` as success (hard reboot) |
 
 ### 3. Assignment
 
@@ -32,6 +45,7 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 | `-GeoId` | Geographic location ID | `177` |
 | `-Culture` | Culture/locale code | `nb-NO` |
 | `-TimeZone` | Windows timezone ID | `W. Europe Standard Time` |
+| `-InstallLanguagePack` | Switch to install full language pack and change UI language | N/A |
 
 ## Common Configurations
 
@@ -50,16 +64,35 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 
 ## What the Script Does
 
-Uses Windows 11 PowerShell cmdlets:
+### Default (regional formats only)
+
+Sets date/time/number formats and timezone without changing the OS display language:
+
 ```powershell
 Set-TimeZone -Id $TimeZone                    # Timezone
-Set-WinUILanguageOverride -Language $Culture  # UI language override
-Set-WinUserLanguageList -LanguageList ...     # Preferred language list
+Set-WinUserLanguageList -LanguageList ...     # Append culture to language list (keeps existing display language)
 Set-Culture -CultureInfo $Culture             # Regional format (date/time/number)
 Set-WinSystemLocale -SystemLocale $Culture    # System locale
 Set-WinHomeLocation -GeoId $GeoId             # Geographic location
 Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
 ```
+
+### With -InstallLanguagePack
+
+Downloads and installs the full language pack, then switches the UI language:
+
+```powershell
+Set-TimeZone -Id $TimeZone
+Install-Language -Language $Culture -CopyToSettings   # Download & install language pack (10-20 min)
+Set-WinUILanguageOverride -Language $Culture           # Switch UI display language
+Set-WinUserLanguageList -LanguageList ...              # Culture as primary language
+Set-Culture -CultureInfo $Culture
+Set-WinSystemLocale -SystemLocale $Culture
+Set-WinHomeLocation -GeoId $GeoId
+Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
+```
+
+Exit code 3010 signals Intune to schedule a reboot (required for the UI language change to take effect).
 
 ## Detection
 
