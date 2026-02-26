@@ -228,7 +228,7 @@ Install-Module Microsoft.Graph -Scope CurrentUser
 ./scripts/compliance/Get-IntuneComplianceReport.ps1 -OutputPath ./reports
 
 # Package an installer
-./scripts/apps/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath .\setup.exe -OutputPath .\out
+./scripts/apps/intunewin-builder/New-IntuneAppPackageFromInstaller.ps1 -InstallerPath .\setup.exe -OutputPath .\out
 
 # Identify stale devices (preview)
 ./scripts/devices/Invoke-StaleDeviceCleanup.ps1 -DaysInactive 60 -WhatIf
