@@ -19,10 +19,15 @@ intune-management-toolkit/
 │
 ├── scripts/
 │   ├── apps/
-│   │   ├── New-IntuneAppPackageFromInstaller.ps1     # Win32 app packaging helper (.intunewin)
-│   │   ├── Get-AdminPortalIDs.ps1                    # Look up App IDs for Microsoft admin portals
-│   │   ├── Get-AppIDs.ps1                            # Bulk-resolve app names to Application IDs
-│   │   └── Get-AppNamesFromIDs.ps1                   # Reverse-resolve Application IDs to names
+│   │   ├── intunewin-packager/
+│   │   │   ├── New-IntuneWinPackage.ps1              # IntuneWinAppUtil.exe wrapper
+│   │   │   └── Package-App.cmd                       # Explorer double-click launcher
+│   │   ├── intunewin-builder/
+│   │   │   └── New-IntuneAppPackageFromInstaller.ps1 # Win32 app packaging helper (.intunewin)
+│   │   └── app-id-lookup/
+│   │       ├── Get-AdminPortalIDs.ps1                # Look up App IDs for Microsoft admin portals
+│   │       ├── Get-AppIDs.ps1                        # Bulk-resolve app names to Application IDs
+│   │       └── Get-AppNamesFromIDs.ps1               # Reverse-resolve Application IDs to names
 │   ├── bitlocker/
 │   │   ├── Install-BitLockerDisableShortcut.ps1      # Intune app: desktop shortcut to disable BitLocker
 │   │   ├── Uninstall-BitLockerDisableShortcut.ps1    # Uninstall script for Intune
@@ -79,25 +84,26 @@ Audits Intune enrollment status for users or groups and flags missing / stale en
 ### [Update-Group.ps1](./scripts/Update-Group.ps1)
 Simple utility for adding/removing device IDs from an Entra ID security group (seed / maintenance scenarios).
 
-### [New-IntuneAppPackageFromInstaller.ps1](./scripts/apps/New-IntuneAppPackageFromInstaller.ps1)
+### [IntuneWin Packager](./scripts/apps/intunewin-packager/)
+Wrapper around `IntuneWinAppUtil.exe` for quick `.intunewin` packaging. Includes a `.cmd` launcher for double-click use from Explorer.
+
+**Files:**
+- `New-IntuneWinPackage.ps1` – PowerShell wrapper script
+- `Package-App.cmd` – Explorer launcher
+
+### [New-IntuneAppPackageFromInstaller.ps1](./scripts/apps/intunewin-builder/New-IntuneAppPackageFromInstaller.ps1)
 Automates creation of Win32 Intune (.intunewin) packages from common installer types.
 
 **Key Features:** Silent switch heuristics, detection rule scaffolding, output folder hygiene.
 
-### [Get-AdminPortalIDs.ps1](./scripts/apps/Get-AdminPortalIDs.ps1)
-Looks up Entra ID Application IDs for Microsoft admin portals (Azure, Exchange, Intune, Entra, Purview, Teams, etc.) by mapping portal names to their backing service principals.
+### [App ID Lookup](./scripts/apps/app-id-lookup/)
+Scripts to resolve Microsoft application names and IDs via the Graph API service principal catalog.
 
-**Key Features:** Graph-based lookup, portal-to-service-principal mapping, CSV export.
+- **Get-AdminPortalIDs.ps1** – Look up Application IDs for Microsoft admin portals (Azure, Exchange, Intune, Entra, Purview, Teams, etc.)
+- **Get-AppIDs.ps1** – Bulk-resolve display names to Application IDs
+- **Get-AppNamesFromIDs.ps1** – Reverse-resolve Application IDs (GUIDs) to display names
 
-### [Get-AppIDs.ps1](./scripts/apps/Get-AppIDs.ps1)
-Bulk-resolves a list of Microsoft application display names to their Application IDs via the Graph API service principal catalog.
-
-**Key Features:** Progress tracking, deduplication, CSV export, handles missing apps gracefully.
-
-### [Get-AppNamesFromIDs.ps1](./scripts/apps/Get-AppNamesFromIDs.ps1)
-Reverse-resolves Application IDs (GUIDs) to their display names by querying Entra ID service principals.
-
-**Key Features:** Deduplication, service principal type reporting, CSV export.
+**Key Features:** Graph-based lookup, deduplication, CSV export, handles missing apps gracefully.
 
 ### [Regional Settings Deployment](./scripts/regional-settings/)
 Intune Win32 app that configures Windows region, locale, and timezone during Autopilot enrollment. Runs as SYSTEM during ESP to set defaults before the user reaches the desktop. Two modes:
