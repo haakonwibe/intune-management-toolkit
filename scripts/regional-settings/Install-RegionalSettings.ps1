@@ -94,34 +94,101 @@ function Write-Log {
     Write-Host $entry
 }
 
-function Test-IsESP {
-    # Detect ESP by checking the Intune enrollment FirstSync registry keys.
-    # If IsSyncDone is not 1 at device or user level, ESP is still in progress.
-    # Reference: https://patchmypc.com/blog/ime-esp-powershell/
+function Write-ESPDiagnostics {
+    # Log all available signals for ESP/OOBE detection diagnostics.
+    # Run during testing to determine which signals reliably indicate ESP.
+    Write-Log "--- ESP Diagnostics Start ---"
+
+    # 1. OOBE registry
+    $OOBEInProgress = [Microsoft.Win32.Registry]::GetValue(
+        "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE", "OOBEInProgress", $null)
+    Write-Log "  OOBE\OOBEInProgress: $OOBEInProgress"
+
+    # 2. Autopilot settings
+    $AutopilotRegPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Provisioning\AutopilotSettings"
+    $DeviceConfigComplete = [Microsoft.Win32.Registry]::GetValue($AutopilotRegPath, "DeviceConfigurationComplete", $null)
+    Write-Log "  AutopilotSettings\DeviceConfigurationComplete: $DeviceConfigComplete"
+
+    # 3. Processes
+    $CloudExpHost = [bool](Get-Process -Name "CloudExperienceHost" -ErrorAction SilentlyContinue)
+    $CloudExpBroker = [bool](Get-Process -Name "CloudExperienceHostBroker" -ErrorAction SilentlyContinue)
+    $WWAHost = [bool](Get-Process -Name "WWAHost" -ErrorAction SilentlyContinue)
+    $ExplorerRunning = [bool](Get-Process -Name "explorer" -ErrorAction SilentlyContinue)
+    Write-Log "  Process CloudExperienceHost: $CloudExpHost"
+    Write-Log "  Process CloudExperienceHostBroker: $CloudExpBroker"
+    Write-Log "  Process WWAHost: $WWAHost"
+    Write-Log "  Process explorer: $ExplorerRunning"
+
+    # 4. Logged-on user
+    $LoggedOnUser = (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).UserName
+    Write-Log "  Logged-on user: $LoggedOnUser"
+
+    # 5. FirstSync / IsSyncDone (device and user level)
     $basePath = "HKLM:\SOFTWARE\Microsoft\Enrollments"
     $enrollments = Get-ChildItem -Path $basePath -ErrorAction SilentlyContinue
     foreach ($enrollment in $enrollments) {
         $providerID = (Get-ItemProperty -Path $enrollment.PSPath -Name "ProviderID" -ErrorAction SilentlyContinue).ProviderID
         if ($providerID -eq "MS DM Server") {
+            Write-Log "  Enrollment GUID: $($enrollment.PSChildName)"
             $firstSyncPath = Join-Path -Path $enrollment.PSPath -ChildPath "FirstSync"
             if (Test-Path -Path $firstSyncPath) {
-                # Check device-level sync status
                 $isSyncDone = (Get-ItemProperty -Path $firstSyncPath -Name "IsSyncDone" -ErrorAction SilentlyContinue).IsSyncDone
-                if ($isSyncDone -ne 1) {
-                    return $true
-                }
-
-                # Check user-level sync status (SID subkeys under FirstSync)
+                Write-Log "  FirstSync\IsSyncDone (device): $isSyncDone"
                 $sids = Get-ChildItem -Path $firstSyncPath -ErrorAction SilentlyContinue
                 foreach ($sid in $sids) {
                     $userSyncDone = (Get-ItemProperty -Path $sid.PSPath -Name "IsSyncDone" -ErrorAction SilentlyContinue).IsSyncDone
-                    if ($userSyncDone -ne 1) {
-                        return $true
-                    }
+                    Write-Log "  FirstSync\$($sid.PSChildName)\IsSyncDone (user): $userSyncDone"
                 }
+            }
+            else {
+                Write-Log "  FirstSync key: Not found"
             }
         }
     }
+
+    # 6. Sidecar PolicyProvider InstallationState (WMI)
+    try {
+        $providers = Get-CimInstance -Namespace "root\cimv2\mdm\dmmap" -ClassName "MDM_EnrollmentStatusTracking_PolicyProviders02_01" -ErrorAction Stop
+        foreach ($p in $providers) {
+            Write-Log "  PolicyProvider $($p.InstanceID) InstallationState: $($p.InstallationState)"
+        }
+    }
+    catch {
+        Write-Log "  PolicyProvider WMI query: Failed ($($_.Exception.Message))"
+    }
+
+    # 7. HasProvisioningCompleted (WMI)
+    try {
+        $setup = Get-CimInstance -Namespace "root\cimv2\mdm\dmmap" -ClassName "MDM_EnrollmentStatusTracking_Setup01" -ErrorAction Stop
+        foreach ($s in $setup) {
+            Write-Log "  HasProvisioningCompleted: $($s.HasProvisioningCompleted)"
+        }
+    }
+    catch {
+        Write-Log "  HasProvisioningCompleted WMI query: Failed ($($_.Exception.Message))"
+    }
+
+    # 8. Device app tracking state (WMI)
+    try {
+        $trackedApps = Get-CimInstance -Namespace "root\cimv2\mdm\dmmap" -ClassName "MDM_EnrollmentStatusTracking_Tracking03_02" -ErrorAction SilentlyContinue
+        if ($trackedApps) {
+            foreach ($app in $trackedApps) {
+                Write-Log "  TrackedApp $($app.InstanceID) InstallationState: $($app.InstallationState)"
+            }
+        }
+        else {
+            Write-Log "  TrackedApps: None found"
+        }
+    }
+    catch {
+        Write-Log "  TrackedApps WMI query: Failed ($($_.Exception.Message))"
+    }
+
+    Write-Log "--- ESP Diagnostics End ---"
+}
+
+function Test-IsESP {
+    # Placeholder — will be updated once we identify reliable signals from diagnostics
     return $false
 }
 
@@ -129,8 +196,7 @@ function Test-IsESP {
 Write-Log "=========================================="
 Write-Log "Regional Settings Installation Started"
 Write-Log "GeoId: $GeoId, Culture: $Culture, TimeZone: $TimeZone, InstallLanguagePack: $InstallLanguagePack"
-$IsESP = Test-IsESP
-Write-Log "ESP/OOBE detected: $IsESP"
+Write-ESPDiagnostics
 Write-Log "=========================================="
 
 try {
