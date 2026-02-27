@@ -153,7 +153,7 @@ Intune Win32 app that configures Windows region, locale, and timezone during Aut
 | Uninstall command | `powershell.exe -ExecutionPolicy Bypass -File Uninstall-RegionalSettings.ps1` |
 | Install behavior | System |
 | Detection | Custom script → `Detect-RegionalSettings.ps1` |
-| Return codes | Add `3010` as success (hard reboot) |
+| Return codes | Add `3010` = Soft reboot (success + reboot required) |
 
 **Logging:** `C:\ProgramData\IntuneTools\RegionalSettings.log`
 

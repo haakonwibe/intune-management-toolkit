@@ -31,7 +31,7 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 | Uninstall command | `powershell.exe -ExecutionPolicy Bypass -File Uninstall-RegionalSettings.ps1` |
 | Install behavior | **System** |
 | Detection rule | Script: `Detect-RegionalSettings.ps1` |
-| Return codes | Add `3010` as success (hard reboot) |
+| Return codes | Add `3010` = Soft reboot (success + reboot required) |
 
 ### 3. Assignment
 
