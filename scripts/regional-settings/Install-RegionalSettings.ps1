@@ -94,10 +94,31 @@ function Write-Log {
     Write-Host $entry
 }
 
+function Test-IsESP {
+    # 1. Check registry gracefully using .NET (returns $null if missing, no errors)
+    $RegPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE"
+    $OOBEInProgress = [Microsoft.Win32.Registry]::GetValue($RegPath, "OOBEInProgress", $null)
+
+    # 2. Check for the ESP/OOBE specific process
+    $CloudExperienceHost = Get-Process -Name "CloudExperienceHost" -ErrorAction SilentlyContinue
+
+    # 3. Check if the standard Windows desktop shell is running
+    $ExplorerRunning = Get-Process -Name "explorer" -ErrorAction SilentlyContinue
+
+    # If OOBE registry is 1, OR the ESP UI is running, OR explorer hasn't started yet
+    if ($OOBEInProgress -eq 1 -or $CloudExperienceHost -or -not $ExplorerRunning) {
+        return $true
+    }
+
+    return $false
+}
+
 # Main execution
 Write-Log "=========================================="
 Write-Log "Regional Settings Installation Started"
 Write-Log "GeoId: $GeoId, Culture: $Culture, TimeZone: $TimeZone, InstallLanguagePack: $InstallLanguagePack"
+$IsESP = Test-IsESP
+Write-Log "ESP/OOBE detected: $IsESP"
 Write-Log "=========================================="
 
 try {
