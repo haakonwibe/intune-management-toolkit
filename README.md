@@ -39,8 +39,26 @@ intune-management-toolkit/
 │   ├── troubleshooting/
 │   │   └── Get-IntuneDeviceDiagnostics.ps1           # Multi‑level device diagnostics
 │   ├── regional-settings/
-│   │   ├── Install-RegionalSettings.ps1              # Set region, locale & timezone during Autopilot
-│   │   └── Detect-RegionalSettings.ps1               # Detection rule for Intune
+│   │   ├── Install-RegionalSettings.ps1              # Set region, locale & timezone (ESP + desktop)
+│   │   ├── Uninstall-RegionalSettings.ps1            # Rollback to previous regional settings
+│   │   ├── Detect-RegionalSettings.ps1               # Detection rule for Intune
+│   │   └── README.md                                 # Deployment guide & parameters
+│   ├── language-packs/
+│   │   ├── nb-NO/                                    # Per-language Win32 apps (13 languages)
+│   │   │   ├── Install-LanguagePack.ps1              # Install language pack
+│   │   │   └── Detect-LanguagePack.ps1               # Detection rule
+│   │   ├── sv-SE/
+│   │   ├── da-DK/
+│   │   ├── fi-FI/
+│   │   ├── de-DE/
+│   │   ├── nl-NL/
+│   │   ├── fr-FR/
+│   │   ├── it-IT/
+│   │   ├── es-ES/
+│   │   ├── pt-PT/
+│   │   ├── tr-TR/
+│   │   ├── sq-AL/
+│   │   └── hr-HR/
 │   ├── proactive-remediations/
 │   │   ├── local-admin/
 │   │   │   ├── Detect-UserLocalAdmin.ps1             # Detection: check if user is local admin
@@ -108,13 +126,20 @@ Scripts to resolve Microsoft application names and IDs via the Graph API service
 **Key Features:** Graph-based lookup, deduplication, CSV export, handles missing apps gracefully.
 
 ### [Regional Settings Deployment](./scripts/regional-settings/)
-Intune Win32 app that configures Windows region, locale, and timezone during Autopilot enrollment. Runs as SYSTEM during ESP to set defaults before the user reaches the desktop. Two modes:
+Intune Win32 app that configures Windows region, locale, and timezone. Works in two contexts:
 
-- **Default** – Sets regional formats (dates, numbers, timezone, geo location) while keeping the existing OS display language (e.g. English).
+- **During ESP** – Runs as SYSTEM, applies settings to the default user profile via `Copy-UserInternationalSettingsToSystem`, so the first user inherits them.
+- **On active desktop** – Also creates a one-shot scheduled task to apply settings directly to the logged-on user's profile (for Company Portal installs).
+
+ESP detection uses the `MDM_EnrollmentStatusTracking_Setup01` WMI class (`HasProvisioningCompleted`).
+
+Two modes:
+- **Default** – Sets regional formats (dates, numbers, timezone, geo location) while keeping the existing OS display language.
 - **With `-InstallLanguagePack`** – Also downloads and installs the full language pack, switches the UI language, and exits with code 3010 to trigger a reboot.
 
 **Files:**
 - `Install-RegionalSettings.ps1` – Install script (regional formats + optional language pack)
+- `Uninstall-RegionalSettings.ps1` – Rollback to previous settings
 - `Detect-RegionalSettings.ps1` – Detection rule for Intune
 
 **Parameters:** `-GeoId` (geographic location), `-Culture` (locale code, e.g. `nb-NO`), `-TimeZone` (Windows timezone ID), `-InstallLanguagePack` (switch to install full language pack and change UI language).
@@ -123,7 +148,7 @@ Intune Win32 app that configures Windows region, locale, and timezone during Aut
 | Setting | Value |
 |---------|-------|
 | Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time"` |
-| Uninstall command | `cmd /c exit 0` |
+| Uninstall command | `powershell.exe -ExecutionPolicy Bypass -File Uninstall-RegionalSettings.ps1` |
 | Install behavior | System |
 | Detection | Custom script → `Detect-RegionalSettings.ps1` |
 
@@ -131,12 +156,19 @@ Intune Win32 app that configures Windows region, locale, and timezone during Aut
 | Setting | Value |
 |---------|-------|
 | Install command | `powershell.exe -ExecutionPolicy Bypass -File Install-RegionalSettings.ps1 -GeoId 177 -Culture "nb-NO" -TimeZone "W. Europe Standard Time" -InstallLanguagePack` |
-| Uninstall command | `cmd /c exit 0` |
+| Uninstall command | `powershell.exe -ExecutionPolicy Bypass -File Uninstall-RegionalSettings.ps1` |
 | Install behavior | System |
 | Detection | Custom script → `Detect-RegionalSettings.ps1` |
 | Return codes | Add `3010` as success (hard reboot) |
 
-**Logging:** `C:\ProgramData\IntuneTools\RegionalSettings.log`
+**Logging:** `C:\ProgramData\IntuneTools\RegionalSettings.log`, `RegionalSettings-User.log`
+
+### [Language Packs](./scripts/language-packs/)
+Per-language Win32 apps for installing language packs during Autopilot. Each language folder contains an install and detection script. Supported languages: nb-NO, sv-SE, da-DK, fi-FI, de-DE, nl-NL, fr-FR, it-IT, es-ES, pt-PT, tr-TR, sq-AL, hr-HR.
+
+**Files per language:**
+- `Install-LanguagePack.ps1` – Downloads and installs the language pack via `Install-Language`
+- `Detect-LanguagePack.ps1` – Detection rule for Intune
 
 ### [Get-IntuneComplianceReport.ps1](./scripts/compliance/Get-IntuneComplianceReport.ps1)
 Generates an HTML (and optional JSON) compliance dashboard with device counts, state breakdown, and issue flags.

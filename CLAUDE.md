@@ -63,7 +63,7 @@ Scripts use the IntuneToolkit module's permission presets:
 - **bitlocker/**: Intune Win32 app for user-initiated BitLocker disable (Autopilot reset prep)
 - **compliance/**: Compliance reporting and analysis
 - **devices/**: Device lifecycle management (cleanup, diagnostics)
-- **regional-settings/**: Intune Win32 app for configuring region, locale & timezone during Autopilot
+- **regional-settings/**: Intune Win32 app for configuring region, locale & timezone. Detects ESP via `HasProvisioningCompleted` WMI; on active desktop sessions also applies settings to the logged-on user via a scheduled task
 - **language-packs/**: Per-language Win32 apps for installing language packs during Autopilot (13 languages, each with install + detection script)
 - **proactive-remediations/**: Intune Proactive Remediation packages (detection + remediation scripts)
 - **troubleshooting/**: Deep device diagnostics with progressive detail levels

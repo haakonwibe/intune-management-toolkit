@@ -35,7 +35,7 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 
 ### 3. Assignment
 
-- Assign to **Users** as **Required** for ESP Account Setup phase
+- Assign to **Devices** as **Required** for ESP Device Setup phase
 - Assign as **Available** for Company Portal self-service
 
 ## Parameters
@@ -62,20 +62,30 @@ IntuneWinAppUtil.exe -c ".\scripts\regional-settings" -s "Install-RegionalSettin
 | USA (Pacific) | 244 | en-US | Pacific Standard Time |
 | Netherlands | 176 | nl-NL | W. Europe Standard Time |
 
-## What the Script Does
+## How It Works
 
-### Default (regional formats only)
+The script runs as SYSTEM and behaves differently depending on whether it is executing during ESP or on an active desktop session.
 
-Sets date/time/number formats and timezone without changing the OS display language:
+### ESP Detection
+
+The script detects ESP by querying the `MDM_EnrollmentStatusTracking_Setup01` WMI class. During ESP, `HasProvisioningCompleted` is `False`; after provisioning it is `True`. This determines whether the logged-on user scheduled task is created.
+
+### During ESP (Autopilot enrollment)
+
+Settings are applied to the SYSTEM account and propagated to new user accounts via `Copy-UserInternationalSettingsToSystem -NewUser $true`. Since the real user profile doesn't exist yet during the Device Setup phase, this ensures settings are inherited when the user first logs in.
 
 ```powershell
 Set-TimeZone -Id $TimeZone                    # Timezone
-Set-WinUserLanguageList -LanguageList ...     # Append culture to language list (keeps existing display language)
+Set-WinUserLanguageList -LanguageList ...     # Append culture to language list
 Set-Culture -CultureInfo $Culture             # Regional format (date/time/number)
 Set-WinSystemLocale -SystemLocale $Culture    # System locale
 Set-WinHomeLocation -GeoId $GeoId             # Geographic location
 Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
 ```
+
+### On active desktop (Company Portal / reinstall)
+
+When running outside ESP (e.g. via Company Portal), the script applies the same SYSTEM-level settings above **plus** creates a one-shot scheduled task that runs as the logged-on user. This ensures `Set-Culture`, `Set-WinHomeLocation`, and other HKCU-scoped cmdlets write to the correct user profile. The task self-cleans (unregisters and deletes the temp script) after execution.
 
 ### With -InstallLanguagePack
 
@@ -114,5 +124,6 @@ The detection script simply checks if this file exists.
 
 ```
 C:\ProgramData\IntuneTools\RegionalSettings.log              # Install log (removed on uninstall)
+C:\ProgramData\IntuneTools\RegionalSettings-User.log         # User-context scheduled task log
 C:\ProgramData\IntuneTools\RegionalSettings-Uninstall.log    # Uninstall log (persists)
 ```
