@@ -110,6 +110,104 @@ function Test-IsESP {
     return $false
 }
 
+function Invoke-RegionalSettingsAsUser {
+    # When running as SYSTEM outside ESP, apply regional settings to the logged-on
+    # user via a scheduled task that runs in their context.
+    $LoggedOnUser = (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).UserName
+    if (-not $LoggedOnUser) {
+        Write-Log "No logged-on user detected, skipping user-context scheduled task"
+        return
+    }
+    Write-Log "Logged-on user: $LoggedOnUser — creating scheduled task to apply settings in user context"
+
+    $UserScriptPath = Join-Path $LogFolder "ApplyRegionalSettings-User.ps1"
+    $UserLogPath = Join-Path $LogFolder "RegionalSettings-User.log"
+    $TaskName = "ApplyRegionalSettings"
+
+    # Build the inline script that will run as the logged-on user
+    $ScriptContent = @"
+`$ErrorActionPreference = "Stop"
+`$LogPath = "$UserLogPath"
+
+function Write-Log {
+    param([string]`$Message)
+    `$timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    `$entry = "[`$timestamp] `$Message"
+    Add-Content -Path `$LogPath -Value `$entry -Force
+}
+
+try {
+    Write-Log "Applying regional settings in user context"
+    Write-Log "User: `$([System.Security.Principal.WindowsIdentity]::GetCurrent().Name)"
+
+    # Set regional format (date, time, number formats)
+    Set-Culture -CultureInfo "$Culture"
+    Write-Log "Set culture to $Culture"
+
+    # Set geographic location
+    Set-WinHomeLocation -GeoId $GeoId
+    Write-Log "Set home location to GeoId $GeoId"
+
+    # Set system locale
+    Set-WinSystemLocale -SystemLocale "$Culture"
+    Write-Log "Set system locale to $Culture"
+
+    # Update user language list
+$(if ($InstallLanguagePack) {
+@"
+    # Language pack mode — set culture as primary
+    Set-WinUILanguageOverride -Language "$Culture"
+    Write-Log "Set UI language override to $Culture"
+    `$OldList = Get-WinUserLanguageList
+    `$UserLanguageList = New-WinUserLanguageList -Language "$Culture"
+    `$UserLanguageList += `$OldList | Where-Object { `$_.LanguageTag -ne "$Culture" }
+    Set-WinUserLanguageList -LanguageList `$UserLanguageList -Force
+    Write-Log "Set user language list with $Culture as primary"
+"@
+} else {
+@"
+    # Regional formats only — append culture to language list
+    `$UserLanguageList = Get-WinUserLanguageList
+    if (-not (`$UserLanguageList | Where-Object { `$_.LanguageTag -eq "$Culture" })) {
+        `$UserLanguageList += New-WinUserLanguageList -Language "$Culture"
+        Set-WinUserLanguageList -LanguageList `$UserLanguageList -Force
+        Write-Log "Added $Culture to end of user language list"
+    }
+    else {
+        Write-Log "User language list already contains $Culture"
+    }
+"@
+})
+
+    # Copy settings to welcome screen and new user accounts
+    Copy-UserInternationalSettingsToSystem -WelcomeScreen `$true -NewUser `$true
+    Write-Log "Copied settings to welcome screen and new user accounts"
+
+    Write-Log "Regional settings applied successfully in user context"
+}
+catch {
+    Write-Log "ERROR: `$(`$_.Exception.Message)"
+    Write-Log `$_.ScriptStackTrace
+}
+finally {
+    # Self-cleanup: remove the scheduled task and this script
+    Unregister-ScheduledTask -TaskName "$TaskName" -Confirm:`$false -ErrorAction SilentlyContinue
+    Remove-Item -Path `$MyInvocation.MyCommand.Source -Force -ErrorAction SilentlyContinue
+}
+"@
+
+    Set-Content -Path $UserScriptPath -Value $ScriptContent -Force
+    Write-Log "Created user-context script: $UserScriptPath"
+
+    # Register and start the scheduled task
+    $Action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$UserScriptPath`""
+    $Principal = New-ScheduledTaskPrincipal -UserId $LoggedOnUser -RunLevel Limited -LogonType Interactive
+    $Trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddSeconds(5)
+    Register-ScheduledTask -TaskName $TaskName -Action $Action -Principal $Principal -Trigger $Trigger -Force | Out-Null
+    Start-ScheduledTask -TaskName $TaskName
+    Write-Log "Scheduled task '$TaskName' registered and triggered for $LoggedOnUser"
+}
+
 # Main execution
 Write-Log "=========================================="
 Write-Log "Regional Settings Installation Started"
@@ -180,6 +278,11 @@ try {
     # Copy settings to welcome screen and new user accounts
     Copy-UserInternationalSettingsToSystem -WelcomeScreen $true -NewUser $true
     Write-Log "Copied settings to welcome screen and new user accounts"
+
+    # If not in ESP, also apply settings to the logged-on user via scheduled task
+    if (-not $IsESP) {
+        Invoke-RegionalSettingsAsUser
+    }
 
     # Create marker file for detection (includes previous settings for rollback)
     @{
