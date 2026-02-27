@@ -95,21 +95,33 @@ function Write-Log {
 }
 
 function Test-IsESP {
-    # 1. Check registry gracefully using .NET (returns $null if missing, no errors)
-    $RegPath = "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\OOBE"
-    $OOBEInProgress = [Microsoft.Win32.Registry]::GetValue($RegPath, "OOBEInProgress", $null)
+    # Detect ESP by checking the Intune enrollment FirstSync registry keys.
+    # If IsSyncDone is not 1 at device or user level, ESP is still in progress.
+    # Reference: https://patchmypc.com/blog/ime-esp-powershell/
+    $basePath = "HKLM:\SOFTWARE\Microsoft\Enrollments"
+    $enrollments = Get-ChildItem -Path $basePath -ErrorAction SilentlyContinue
+    foreach ($enrollment in $enrollments) {
+        $providerID = (Get-ItemProperty -Path $enrollment.PSPath -Name "ProviderID" -ErrorAction SilentlyContinue).ProviderID
+        if ($providerID -eq "MS DM Server") {
+            $firstSyncPath = Join-Path -Path $enrollment.PSPath -ChildPath "FirstSync"
+            if (Test-Path -Path $firstSyncPath) {
+                # Check device-level sync status
+                $isSyncDone = (Get-ItemProperty -Path $firstSyncPath -Name "IsSyncDone" -ErrorAction SilentlyContinue).IsSyncDone
+                if ($isSyncDone -ne 1) {
+                    return $true
+                }
 
-    # 2. Check for the ESP/OOBE specific process
-    $CloudExperienceHost = Get-Process -Name "CloudExperienceHost" -ErrorAction SilentlyContinue
-
-    # 3. Check if the standard Windows desktop shell is running
-    $ExplorerRunning = Get-Process -Name "explorer" -ErrorAction SilentlyContinue
-
-    # If OOBE registry is 1, OR the ESP UI is running, OR explorer hasn't started yet
-    if ($OOBEInProgress -eq 1 -or $CloudExperienceHost -or -not $ExplorerRunning) {
-        return $true
+                # Check user-level sync status (SID subkeys under FirstSync)
+                $sids = Get-ChildItem -Path $firstSyncPath -ErrorAction SilentlyContinue
+                foreach ($sid in $sids) {
+                    $userSyncDone = (Get-ItemProperty -Path $sid.PSPath -Name "IsSyncDone" -ErrorAction SilentlyContinue).IsSyncDone
+                    if ($userSyncDone -ne 1) {
+                        return $true
+                    }
+                }
+            }
+        }
     }
-
     return $false
 }
 
