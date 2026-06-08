@@ -17,6 +17,9 @@ The repository contains standalone PowerShell scripts that can be run directly:
 # Core device diagnostics
 .\scripts\troubleshooting\Get-IntuneDeviceDiagnostics.ps1 -DeviceName LAPTOP-123
 
+# MMP-C / linked (dual) enrollment diagnostics (run elevated, on the device)
+.\scripts\troubleshooting\Invoke-MmpcDiagnostics.ps1 -DiscoverEndpoints -Json
+
 # Compliance reporting
 .\scripts\compliance\Get-IntuneComplianceReport.ps1 -OutputPath .\reports
 
@@ -66,7 +69,7 @@ Scripts use the IntuneToolkit module's permission presets:
 - **regional-settings/**: Intune Win32 app for configuring region, locale & timezone during Autopilot
 - **language-packs/**: Per-language Win32 apps for installing language packs during Autopilot (13 languages, each with install + detection script)
 - **proactive-remediations/**: Intune Proactive Remediation packages (detection + remediation scripts)
-- **troubleshooting/**: Deep device diagnostics with progressive detail levels
+- **troubleshooting/**: Deep device diagnostics with progressive detail levels, plus `Invoke-MmpcDiagnostics.ps1` for MMP-C / linked (dual) enrollment health (EPM/WinDC channel) — self-contained, runs locally, no Graph/module dependency
 
 ### Azure Functions
 The `function-apps/app-dependency-manager/` contains a timer-triggered Azure Function that:
