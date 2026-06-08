@@ -205,7 +205,9 @@ function Get-MmpcEnrollmentTask {
                 ($_.TaskPath -like '*EnterpriseMgmt*') -and
                 (
                     ($_.TaskName -like '*dual enrollment*') -or
-                    ($_.Actions | Where-Object { "$($_.Execute)$($_.Arguments)" -match 'deviceenroller|EnrollMmpc' })
+                    # Match ONLY the MMP-C-specific argument. Nearly every enrollment-client
+                    # task invokes deviceenroller.exe, so matching the exe name caught them all.
+                    ($_.Actions | Where-Object { "$($_.Execute) $($_.Arguments)" -match 'EnrollMmpc' })
                 )
             }
         foreach ($t in $tasks) {
@@ -459,11 +461,13 @@ function Get-MmpcEndpointMap {
     } catch { Write-Verbose "endpoint harvest from event log failed: $_" }
 
     # 4) live discovery: surface the real enrollment/policy/auth URLs
-    $live = $null
+    #    NB: use a distinct name from the [switch]$Live param - PowerShell variable
+    #    names are case-insensitive, so a local $live would overwrite $Live.
+    $discovery = $null
     if ($Live) {
-        $live = Invoke-MmpcDiscoveryProbe -Enrollments $Enrollments
-        foreach ($u in @($live.EnrollmentServiceUrl, $live.EnrollmentPolicyServiceUrl,
-                          $live.AuthenticationServiceUrl, $live.ManagementResource)) {
+        $discovery = Invoke-MmpcDiscoveryProbe -Enrollments $Enrollments
+        foreach ($u in @($discovery.EnrollmentServiceUrl, $discovery.EnrollmentPolicyServiceUrl,
+                          $discovery.AuthenticationServiceUrl, $discovery.ManagementResource)) {
             & $note $u 'live discovery response'
         }
     }
@@ -473,7 +477,7 @@ function Get-MmpcEndpointMap {
         $srcs = ($candidates | Where-Object Host -eq $h | Select-Object -ExpandProperty Source -Unique) -join '; '
         [pscustomobject]@{ Host = $h; Sources = $srcs }
     }
-    [pscustomobject]@{ Hosts = $map; Live = $live }
+    [pscustomobject]@{ Hosts = $map; Live = $discovery }
 }
 
 # ---------------------------------------------------------------------------
@@ -579,14 +583,35 @@ function Invoke-MmpcDiagnostics {
     $linked = Get-LinkedEnrollmentState
     if ($linked) {
         $linked | Format-Table ParentEnrollment, EnrollStatus, LastError, MMPCLocked, MmpcEnrollmentFlag, DiscoveryEndpoint -AutoSize | Out-Host
-        # MmpcEnrollmentFlag = 2 (0x2) is the documented "successfully enrolled" value
-        $flagOk = $linked | Where-Object { $_.MmpcEnrollmentFlag -eq 2 }
-        if ($flagOk) { Write-Result PASS "MmpcEnrollmentFlag = 2 (enrolled)." | Out-Null }
-        else         { Write-Result WARN "MmpcEnrollmentFlag is not 2. Linked enrollment incomplete or in progress." | Out-Null }
-        # LastError is the actual code to chase when the link is unhealthy
+
         foreach ($l in $linked) {
+            # The decisive health signal is the link itself: a real MMP-C enrollment exists,
+            # the LinkedEnrollmentId resolves to it, MMPCLocked=1, and LastError=0. The
+            # MmpcEnrollmentFlag and exact EnrollStatus values vary by Windows build and are
+            # often absent on perfectly healthy devices, so they corroborate rather than decide.
+            $linkTarget = $enrollments | Where-Object { $_.EnrollmentId -eq $l.LinkedEnrollmentId -and $_.Channel -eq 'MMP-C' }
+            $locked     = ("$($l.MMPCLocked)" -eq '1')
+            $noError    = (-not $l.LastError -or $l.LastError -eq 0)
+
+            if ($linkTarget -and $locked -and $noError) {
+                Write-Result PASS "Linked enrollment established -> MMP-C enrollment $($l.LinkedEnrollmentId) (MMPCLocked=1, LastError=0)." | Out-Null
+            }
+            elseif (-not $linkTarget) {
+                Write-Result FAIL "LinkedEnrollmentId '$($l.LinkedEnrollmentId)' does not resolve to a present MMP-C enrollment - the link is dangling." | Out-Null
+            }
+            elseif (-not $locked) {
+                Write-Result WARN "MMPCLocked is not 1 on $($l.ParentEnrollment) - linked enrollment not yet locked in / still in progress." | Out-Null
+            }
+
             if ($l.LastError -and $l.LastError -ne 0) {
                 Write-Result WARN ("LinkedEnrollment LastError = {0} (0x{1:X8}) on {2}." -f $l.LastError, ([int64]$l.LastError -band 0xFFFFFFFF), $l.ParentEnrollment) | Out-Null
+            }
+
+            # secondary, non-blocking corroboration - never the sole basis for a verdict
+            switch -regex ("$($l.MmpcEnrollmentFlag)") {
+                '^2$'   { Write-Result PASS "MmpcEnrollmentFlag = 2 (enrolled)." | Out-Null; break }
+                '^\s*$' { Write-Result INFO "MmpcEnrollmentFlag not present - inconclusive on its own; health taken from the link state above." | Out-Null; break }
+                default { Write-Result WARN "MmpcEnrollmentFlag = $($l.MmpcEnrollmentFlag) (expected 2 when fully enrolled)." | Out-Null }
             }
         }
     }
