@@ -38,7 +38,8 @@ intune-management-toolkit/
 │   │   └── Invoke-StaleDeviceCleanup.ps1             # Stale / orphaned device cleanup
 │   ├── troubleshooting/
 │   │   ├── Get-IntuneDeviceDiagnostics.ps1           # Multi‑level device diagnostics
-│   │   └── Invoke-MmpcDiagnostics.ps1                # MMP-C / linked (dual) enrollment diagnostics
+│   │   ├── Invoke-MmpcDiagnostics.ps1                # MMP-C / linked (dual) enrollment diagnostics
+│   │   └── README.md                                 # Troubleshooting scripts guide
 │   ├── regional-settings/
 │   │   ├── Install-RegionalSettings.ps1              # Set region, locale & timezone (ESP + desktop)
 │   │   ├── Uninstall-RegionalSettings.ps1            # Rollback to previous regional settings
@@ -246,9 +247,11 @@ Diagnoses the **MMP-C / linked (dual) enrollment** channel that delivers Endpoin
 
 **Endpoint discovery:** only `discovery.dm.microsoft.com` is a fixed host — the enrollment/policy/auth URLs are returned dynamically by the discovery service, so the script **uncovers them from the device** (the `DiscoveryEndpoint` reg value + the DM diag log, and with `-DiscoverEndpoints` a live query of the discovery service) rather than hardcoding guesses.
 
-**Output:** color-coded `[PASS]`/`[WARN]`/`[FAIL]`/`[INFO]` lines, a summary tally with the list of issues to fix, and a structured object you can capture (`$r = .\Invoke-MmpcDiagnostics.ps1`).
+**Output:** color-coded `[PASS]`/`[WARN]`/`[FAIL]`/`[INFO]` lines, a summary tally with the list of issues to fix, and (with `-PassThru`) a structured object you can capture (`$r = .\Invoke-MmpcDiagnostics.ps1 -PassThru`).
 
-**Flags:** `-DiscoverEndpoints` (live discovery probe), `-Json` / `-JsonPath` (timestamped JSON report), `-CollectCab` (MdmDiagnosticsTool cab), `-TriggerReEnrollment` (re-fires `deviceenroller /c /EnrollMmpc`; needs SYSTEM, prompts first), `-EventLookbackHours`.
+**Flags:** `-DiscoverEndpoints` (live discovery probe), `-Json` / `-JsonPath` (timestamped JSON report), `-PassThru` (return the result object), `-CollectCab` (MdmDiagnosticsTool cab), `-TriggerReEnrollment` (re-fires `deviceenroller /c /EnrollMmpc`; needs SYSTEM, prompts first), `-EventLookbackHours`.
+
+See the [troubleshooting README](./scripts/troubleshooting/README.md) for the full check list, output interpretation, deployment-as-remediation notes, and future enhancements.
 
 ## IntuneToolkit Module
 Shared helpers under `modules/IntuneToolkit` provide:
