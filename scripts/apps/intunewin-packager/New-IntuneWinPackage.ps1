@@ -355,11 +355,27 @@ if ($PSCmdlet.ShouldProcess("$AppName ($SetupFile)", "Package with IntuneWinAppU
 
             # Try to find a logo matching the app name (fuzzy: strip spaces, dashes, etc.)
             $appNameNormalized = ($AppName -replace '[^a-zA-Z0-9]', '').ToLower()
+
+            # Extract meaningful words (3+ alpha chars) for token-based fallback matching
+            $noiseWords = @('logo', 'icon', 'bit', 'app')
+            $appTokens = [regex]::Matches($AppName, '[a-zA-Z]{3,}') |
+                         ForEach-Object { $_.Value.ToLower() } |
+                         Where-Object { $_ -notin $noiseWords }
+
             $matchedLogo = Get-ChildItem -Path $logoFolder -File |
                            Where-Object { $logoExtensions -contains $_.Extension } |
                            Where-Object {
                                $fileNormalized = ($_.BaseName -replace '[^a-zA-Z0-9]', '').ToLower()
-                               $fileNormalized -like "*$appNameNormalized*" -or $appNameNormalized -like "*$fileNormalized*"
+                               # Exact containment check (original logic)
+                               if ($fileNormalized -like "*$appNameNormalized*" -or $appNameNormalized -like "*$fileNormalized*") {
+                                   return $true
+                               }
+                               # Token overlap: match if any meaningful app word appears in the filename or vice versa
+                               $fileTokens = [regex]::Matches($_.BaseName, '[a-zA-Z]{3,}') |
+                                             ForEach-Object { $_.Value.ToLower() } |
+                                             Where-Object { $_ -notin $noiseWords }
+                               $overlap = $appTokens | Where-Object { $_ -in $fileTokens }
+                               return ($overlap.Count -gt 0)
                            } |
                            Select-Object -First 1
 
