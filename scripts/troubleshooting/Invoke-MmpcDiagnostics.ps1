@@ -50,6 +50,12 @@
         Use -JsonPath <dir-or-file> to control the location.
 
 .EXAMPLE
+    $r = .\Invoke-MmpcDiagnostics.ps1 -PassThru
+        Returns the structured result object ($r.Findings/.Enrollments/.Linked/.Endpoints/
+        .Summary) for further processing. Without -PassThru the console output ends cleanly
+        at the summary.
+
+.EXAMPLE
     .\Invoke-MmpcDiagnostics.ps1 -CollectCab
         Also drops an MdmDiagnosticsTool cab for deeper offline analysis.
 
@@ -66,6 +72,7 @@ param(
     [switch]$DiscoverEndpoints,
     [switch]$Json,
     [string]$JsonPath,
+    [switch]$PassThru,
     [int]$EventLookbackHours = 24,
     [string]$CabOutputPath = "$env:TEMP\MdmLogs.cab"
 )
@@ -274,18 +281,28 @@ function Get-MmpcCertificate {
 function Get-EpmAgentState {
     [CmdletBinding()] param()
 
-    $svc    = Get-Service -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -like '*EPM*' -or $_.Name -like '*EPM*' }
-    $folder = Test-Path 'C:\Program Files\Microsoft EPM Agent'
+    # Win32_Service (not Get-Service) so we can show the DisplayName and binary PathName -
+    # makes the match self-evidencing rather than trusting a fuzzy '*EPM*' name match.
+    $agentFolder = 'C:\Program Files\Microsoft EPM Agent'
+    $svc = Get-CimInstance Win32_Service -ErrorAction SilentlyContinue |
+           Where-Object { $_.Name -like '*EPM*' -or $_.DisplayName -like '*EPM*' } |
+           Select-Object -First 1
+    $folder = Test-Path $agentFolder
+    # confirm the folder actually holds the agent binary, not just an empty leftover dir
+    $binaryPresent = $folder -and [bool](Get-ChildItem $agentFolder -Filter '*.exe' -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1)
     $dhm    = Get-RegValuesSafe (Join-Path $DhmPolicyKey '')
     $dhmInstance = $null
     if ($dhm) { $dhmInstance = $dhm.ConfigDeviceHealthMonitoringServiceInstance }
 
     [pscustomobject]@{
-        AgentServiceName   = ($svc | Select-Object -First 1 -ExpandProperty Name)
-        AgentServiceStatus = ($svc | Select-Object -First 1 -ExpandProperty Status)
-        AgentFolderPresent = $folder
-        DhmPolicyPresent   = [bool]$dhm
-        DhmServiceInstance = $dhmInstance
+        AgentServiceName    = $svc.Name
+        AgentServiceDisplay = $svc.DisplayName
+        AgentServiceStatus  = $svc.State
+        AgentServicePath    = $svc.PathName
+        AgentFolderPresent  = $folder
+        AgentBinaryPresent  = $binaryPresent
+        DhmPolicyPresent    = [bool]$dhm
+        DhmServiceInstance  = $dhmInstance
     }
 }
 
@@ -646,7 +663,15 @@ function Invoke-MmpcDiagnostics {
     Write-Host "`n-- EPM agent / DeviceHealthMonitoring --" -ForegroundColor Cyan
     $epm = Get-EpmAgentState
     $epm | Format-List | Out-Host
-    if (-not $epm.AgentFolderPresent) { Write-Result WARN "EPM agent folder absent - agent never installed (downstream of the enrollment, not the cause)." | Out-Null }
+    if (-not $epm.AgentBinaryPresent) {
+        Write-Result WARN "EPM agent binary not found under 'C:\Program Files\Microsoft EPM Agent' - agent not installed (downstream of the enrollment, not the cause)." | Out-Null
+    }
+    elseif ("$($epm.AgentServiceStatus)" -ne 'Running') {
+        Write-Result WARN "EPM agent installed but service '$($epm.AgentServiceName)' is '$($epm.AgentServiceStatus)' (expected Running)." | Out-Null
+    }
+    else {
+        Write-Result PASS "EPM agent installed and running ($($epm.AgentServiceDisplay))." | Out-Null
+    }
     if (-not $epm.DhmPolicyPresent)   { Write-Result WARN "DeviceHealthMonitoring policy keys absent. Known 404 trigger in the DM diag log." | Out-Null }
 
     # 6. event log
@@ -730,5 +755,7 @@ if ($CollectCab)          { Invoke-MdmDiagCab -OutputPath $CabOutputPath }
 if ($TriggerReEnrollment) { Invoke-MmpcReEnrollment }
 if ($Json)                { Export-MmpcDiagnosticsJson -Diagnostics $diag -Path $JsonPath | Out-Null }
 
-# emit the structured result last so it can be captured: $r = .\Invoke-MmpcDiagnostics.ps1
-$diag
+# Return the structured result only when asked, so an interactive run ends cleanly
+# at the summary instead of dumping a half-rendered object:
+#   $r = .\Invoke-MmpcDiagnostics.ps1 -PassThru
+if ($PassThru) { $diag }
