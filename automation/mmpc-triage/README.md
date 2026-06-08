@@ -4,6 +4,20 @@ Part 2 of the [MMP-C triage pipeline](../../docs/mmpc-triage-design.md). A sched
 
 **Report-only by default.** It logs exactly what it would add/remove and writes nothing until you pass `-Apply`.
 
+## Deployment checklist (in order)
+
+Order matters: the managed identity must exist before it can be granted Graph access, and the PR GUID + group IDs are needed before the variables. Details for each step are in the sections below.
+
+- [ ] **1. Automation account** — create it; enable **system-assigned managed identity**; note its **Object (principal) ID**.
+- [ ] **2. Import the runbook** — `Invoke-MmpcTriageOrchestrator.ps1` as a **PowerShell** runbook, **runtime 7.2**, then **Publish**. *(No modules to import — the runbook uses no Az/Graph SDK.)*
+- [ ] **3. Grant Graph app roles** to the MI — the three below, via the snippet in [Grant Graph permissions](#grant-graph-permissions-to-the-managed-identity). *(Needs an interactive admin login.)*
+- [ ] **4. Triage group(s)** — one assigned Entra security group per reason (start with one); note each **Object ID**.
+- [ ] **5. Proactive Remediation** — deploy the detection PR (`Invoke-MmpcDiagnostics.ps1 -AsRemediation`); note its **deviceHealthScript GUID**.
+- [ ] **6. Automation Variables** — create the three under [Configure](#configure-automation-variables).
+- [ ] **7. Run report-only** — Start the runbook (writes nothing); confirm the per-reason `+N -N` output.
+      ⚠️ **This first run doubles as the endpoint check** — if it prints `Devices reporting: 0` while devices have run the PR, the `Get-PrDeviceState` Graph shape needs a tweak for the current API version. That's the one item flagged to verify.
+- [ ] **8. Go live (P3)** — once report-only looks right, create a **Schedule** and run with `-Apply`.
+
 ## How it works
 
 ```
