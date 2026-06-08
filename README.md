@@ -37,7 +37,8 @@ intune-management-toolkit/
 │   ├── devices/
 │   │   └── Invoke-StaleDeviceCleanup.ps1             # Stale / orphaned device cleanup
 │   ├── troubleshooting/
-│   │   └── Get-IntuneDeviceDiagnostics.ps1           # Multi‑level device diagnostics
+│   │   ├── Get-IntuneDeviceDiagnostics.ps1           # Multi‑level device diagnostics
+│   │   └── Invoke-MmpcDiagnostics.ps1                # MMP-C / linked (dual) enrollment diagnostics
 │   ├── regional-settings/
 │   │   ├── Install-RegionalSettings.ps1              # Set region, locale & timezone (ESP + desktop)
 │   │   ├── Uninstall-RegionalSettings.ps1            # Rollback to previous regional settings
@@ -230,6 +231,24 @@ Actionable per‑device diagnostics with progressive depth levels.
 | Detailed | Deep analysis | + Setting failures, conflicts, full app inventory, hardware, AAD device, recent actions, audit events, enhanced recommendations & summary |
 
 **Exports:** JSON bundle (`-OutputPath`) including policies, settings (Detailed), apps, groups, autopilot, protection, audit events (if `-IncludeAuditLogs`), device actions, issues & recommendations.
+
+### [Invoke-MmpcDiagnostics.ps1](./scripts/troubleshooting/Invoke-MmpcDiagnostics.ps1)
+Diagnoses the **MMP-C / linked (dual) enrollment** channel that delivers Endpoint Privilege Management (EPM) and Device Inventory policies via Windows Declared Configuration (WinDC). A healthy OMA-DM enrollment says nothing about MMP-C health, so EPM policies can fail while every classic profile applies clean. Runs locally on the device — **self-contained, no IntuneToolkit/Graph dependency** — so it can also ship as a Proactive Remediation. Run elevated.
+
+**Checks in one pass:**
+- Both enrollments under `HKLM\SOFTWARE\Microsoft\Enrollments` and which is MMP-C
+- The `LinkedEnrollment` subkey (`EnrollStatus`, `LastError`, `MMPCLocked`, `MmpcEnrollmentFlag`, `DiscoveryEndpoint`)
+- The `deviceenroller.exe /EnrollMmpc` dual-enrollment scheduled task (a lingering task = stuck/incomplete)
+- The MMP-C device certificate referenced by `SSLClientCertSearchCriteria`
+- EPM agent service/folder and `DeviceHealthMonitoring` policy keys
+- Recent failures in the DeviceManagement-Enterprise-Diagnostics-Provider/Admin log
+- Endpoint reachability **and TLS-inspection detection** (re-signed server cert is the most common MMP-C break)
+
+**Endpoint discovery:** only `discovery.dm.microsoft.com` is a fixed host — the enrollment/policy/auth URLs are returned dynamically by the discovery service, so the script **uncovers them from the device** (the `DiscoveryEndpoint` reg value + the DM diag log, and with `-DiscoverEndpoints` a live query of the discovery service) rather than hardcoding guesses.
+
+**Output:** color-coded `[PASS]`/`[WARN]`/`[FAIL]`/`[INFO]` lines, a summary tally with the list of issues to fix, and a structured object you can capture (`$r = .\Invoke-MmpcDiagnostics.ps1`).
+
+**Flags:** `-DiscoverEndpoints` (live discovery probe), `-Json` / `-JsonPath` (timestamped JSON report), `-CollectCab` (MdmDiagnosticsTool cab), `-TriggerReEnrollment` (re-fires `deviceenroller /c /EnrollMmpc`; needs SYSTEM, prompts first), `-EventLookbackHours`.
 
 ## IntuneToolkit Module
 Shared helpers under `modules/IntuneToolkit` provide:
