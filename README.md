@@ -78,6 +78,14 @@ intune-management-toolkit/
 │       ├── IntuneToolkit.psm1
 │       └── IntuneToolkit.psd1
 │
+├── automation/
+│   └── mmpc-triage/                                  # Azure Automation runbook: MMP-C triage orchestrator
+│       ├── Invoke-MmpcTriageOrchestrator.ps1         # Reconciles triage groups from PR results (report-only → -Apply)
+│       └── README.md                                 # Deploy & config guide
+│
+├── docs/
+│   └── mmpc-triage-design.md                         # MMP-C health triage pipeline design
+│
 └── function-apps/
     └── app-dependency-manager/                       # Azure Function for app dependency automation
         ├── host.json

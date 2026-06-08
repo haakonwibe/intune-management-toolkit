@@ -1,8 +1,8 @@
 # Design: MMP-C Health Triage Pipeline
 
-**Status:** Approved — P0 implemented
+**Status:** Approved — P0 + P2 (report-only) implemented
 **Owner:** @haakonwibe
-**Decisions:** Orchestrator = **Azure Automation** runbook. Proactive Remediation licensing confirmed in place.
+**Decisions:** Orchestrator = **Azure Automation** runbook ([`automation/mmpc-triage`](../automation/mmpc-triage)). Proactive Remediation licensing confirmed in place.
 **Related:** [`scripts/troubleshooting/Invoke-MmpcDiagnostics.ps1`](../scripts/troubleshooting/Invoke-MmpcDiagnostics.ps1), [`function-apps/app-dependency-manager`](../function-apps/app-dependency-manager)
 
 ## Problem
@@ -140,8 +140,8 @@ for each reason code R:
 
 1. **P0 — ✅ done.** `-AsRemediation` + reason codes implemented in the script; decision tree validated across healthy + all failure modes. (Still worth a live run on a genuinely broken device when one is available.)
 2. **P1** — Deploy PR detection-only to a pilot ring; just observe Intune's pass/fail reporting (no automation).
-3. **P2** — Orchestrator in **report-only** mode (log what it *would* add/remove).
-4. **P3** — Enable group writes to triage groups.
+3. **P2 — ✅ done.** Orchestrator runbook in **report-only** mode ([`automation/mmpc-triage`](../automation/mmpc-triage)) — managed-identity auth, batched device resolution, set-diff reconciliation logged but not written. Parsing + diff logic unit-tested.
+4. **P3** — Enable group writes (`-Apply`) on a schedule once report-only output looks right.
 5. **P4** — Stand up the human triage playbooks per bucket.
 6. **P5** — Confirm closed-loop removal; widen targeting beyond pilot.
 
