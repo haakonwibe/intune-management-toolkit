@@ -1,7 +1,8 @@
 # Design: MMP-C Health Triage Pipeline
 
-**Status:** Draft / Proposed
+**Status:** Approved — P0 implemented
 **Owner:** @haakonwibe
+**Decisions:** Orchestrator = **Azure Automation** runbook. Proactive Remediation licensing confirmed in place.
 **Related:** [`scripts/troubleshooting/Invoke-MmpcDiagnostics.ps1`](../scripts/troubleshooting/Invoke-MmpcDiagnostics.ps1), [`function-apps/app-dependency-manager`](../function-apps/app-dependency-manager)
 
 ## Problem
@@ -61,7 +62,8 @@ The script gains an **`-AsRemediation`** mode (additive; default behaviour uncha
 | Reason code | Trigger (from existing checks) | Typical fix (Part 2) |
 |-------------|-------------------------------|----------------------|
 | `MMPC_NO_LINK` | No MMP-C enrollment, or `LinkedEnrollmentId` dangling | Check EPM policy assignment / enrollment restrictions |
-| `MMPC_TLS_INSPECTION` | Discovered endpoint cert issued by a non-Microsoft CA | Exclude `*.dm.microsoft.com` from SSL inspection |
+| `MMPC_TLS_INSPECTION` | Discovery endpoint cert issued by a non-Microsoft CA (checked when the link is broken) | Exclude `*.dm.microsoft.com` from SSL inspection |
+| `MMPC_ENDPOINT_UNREACHABLE` | Discovery host not reachable (TCP) when the link is broken | Firewall/proxy egress allowlist |
 | `MMPC_STUCK_TASK` | `/EnrollMmpc` task lingering / non-zero `LastResult` | Assign re-enrollment remediation |
 | `MMPC_LAST_ERROR` | `LinkedEnrollment\LastError` ≠ 0 | Decode the error code; route accordingly |
 | `MMPC_CERT_MISSING` | `SSLClientCertSearchCriteria` cert absent/expired | Renew/repair device cert |
@@ -77,11 +79,9 @@ MMP-C linking completes some time **after** enrollment. The detection must not t
 
 ## Part 2 — Orchestrator (scheduled job)
 
-### Platform decision — **DECISION POINT**
+### Platform — **DECIDED: Azure Automation PowerShell runbook**
 
-**Recommended: Azure Automation PowerShell runbook.** Best fit for a scheduled Graph/Entra reconciliation job — native PowerShell, built-in scheduling, built-in per-job history (valuable for a human-reviewed workflow), no cold-start/timeout quirks.
-
-**Alternative: Azure Function (timer trigger).** Choose for consistency with the existing `app-dependency-manager` Function and its CI/CD. Watch the Consumption-plan timeout when paging a large fleet.
+Chosen over an Azure Function: best fit for a scheduled Graph/Entra reconciliation job — native PowerShell, built-in scheduling, built-in per-job history (valuable for a human-reviewed workflow), no cold-start/timeout quirks. (The Function alternative was considered for consistency with `app-dependency-manager`; operational fit won.)
 
 The rest of this section is host-agnostic.
 
@@ -138,7 +138,7 @@ for each reason code R:
 
 ## Rollout phases
 
-1. **P0** — Implement `-AsRemediation` + reason codes in the script; validate on a healthy + a broken device.
+1. **P0 — ✅ done.** `-AsRemediation` + reason codes implemented in the script; decision tree validated across healthy + all failure modes. (Still worth a live run on a genuinely broken device when one is available.)
 2. **P1** — Deploy PR detection-only to a pilot ring; just observe Intune's pass/fail reporting (no automation).
 3. **P2** — Orchestrator in **report-only** mode (log what it *would* add/remove).
 4. **P3** — Enable group writes to triage groups.
@@ -149,7 +149,7 @@ for each reason code R:
 
 - Confirm the exact Graph scope(s) for reading PR run states + per-device output.
 - Targeting: dynamic group of recently-enrolled Windows devices, or all Windows with detection filtering?
-- Licensing: confirm Proactive Remediation entitlement (Win Ent E3/E5, EDU A3/A5, or Intune Suite).
+- **Settling escalation:** a device with EPM assigned but no link reports `MMPC_SETTLING` forever from the device's point of view (it can't see assignment). The orchestrator — which *can* see assignment + device age via Graph — should escalate "settling beyond N hours with EPM assigned" into the triage flow.
 - One triage group per reason vs a single group with the reason carried elsewhere (extension attribute / report)?
 - Do we want the orchestrator to also write a small **state report** (JSON/HTML) per run for dashboards?
 

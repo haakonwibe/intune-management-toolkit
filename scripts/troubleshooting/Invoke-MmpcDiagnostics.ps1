@@ -56,6 +56,13 @@
         at the summary.
 
 .EXAMPLE
+    .\Invoke-MmpcDiagnostics.ps1 -AsRemediation
+        Intune Proactive Remediation detection mode. Suppresses the human report and emits
+        ONE line "STATUS|REASON|detail" (e.g. "UNHEALTHY|MMPC_TLS_INSPECTION|..."), exiting
+        1 when unhealthy and 0 when healthy or still-settling. Fails safe (exit 0) on script
+        error or when not elevated. See docs/mmpc-triage-design.md.
+
+.EXAMPLE
     .\Invoke-MmpcDiagnostics.ps1 -CollectCab
         Also drops an MdmDiagnosticsTool cab for deeper offline analysis.
 
@@ -73,6 +80,7 @@ param(
     [switch]$Json,
     [string]$JsonPath,
     [switch]$PassThru,
+    [switch]$AsRemediation,
     [int]$EventLookbackHours = 24,
     [string]$CabOutputPath = "$env:TEMP\MdmLogs.cab"
 )
@@ -575,6 +583,97 @@ function Invoke-MmpcReEnrollment {
 }
 
 # ===========================================================================
+# remediation verdict (machine-readable, single reason code) - used by
+# -AsRemediation for Intune Proactive Remediation detection. Quiet: returns
+# one object, writes nothing to the host. See docs/mmpc-triage-design.md.
+# ===========================================================================
+function Get-MmpcRemediationVerdict {
+    [CmdletBinding()] param()
+
+    $verdict = { param($Status, $Reason, $Detail)
+        [pscustomobject]@{ Status = $Status; Reason = $Reason; Detail = $Detail } }
+
+    # not MDM enrolled at all
+    if (-not (Test-Path $EnrollmentsRoot)) {
+        return & $verdict 'UNHEALTHY' 'MMPC_NO_LINK' 'Device is not MDM enrolled.'
+    }
+
+    $enrollments = Get-EnrollmentInventory          # quiet (root exists)
+    $mmpc        = $enrollments | Where-Object Channel -eq 'MMP-C'
+    $linked      = Get-LinkedEnrollmentState
+
+    # --- evaluate the link itself (the decisive signal) ---
+    $linkHealthy = $false
+    $brokenReason = $null
+    $brokenDetail = $null
+
+    if (-not $linked) {
+        if ($mmpc) {
+            $brokenReason = 'MMPC_NO_LINK'; $brokenDetail = 'MMP-C enrollment present but no LinkedEnrollment key.'
+        }
+        else {
+            # nothing linked yet - can't tell "still completing" from "no EPM assigned"
+            # from the device alone; don't triage. Orchestrator escalates if it stays here.
+            return & $verdict 'SETTLING' 'MMPC_SETTLING' 'No LinkedEnrollment yet; may still be completing or EPM not assigned.'
+        }
+    }
+    else {
+        foreach ($l in $linked) {
+            $locked     = ("$($l.MMPCLocked)" -eq '1')
+            $hasError   = ($l.LastError -and $l.LastError -ne 0)
+            $linkTarget = $enrollments | Where-Object { $_.EnrollmentId -eq $l.LinkedEnrollmentId -and $_.Channel -eq 'MMP-C' }
+
+            if ($hasError) {
+                $brokenReason = 'MMPC_LAST_ERROR'
+                $brokenDetail = "LinkedEnrollment LastError = $($l.LastError) on $($l.ParentEnrollment)."
+                break
+            }
+            if (-not $locked) {
+                return & $verdict 'SETTLING' 'MMPC_SETTLING' 'Linked enrollment locking in progress (MMPCLocked not set, no error).'
+            }
+            if (-not $linkTarget) {
+                $brokenReason = 'MMPC_NO_LINK'
+                $brokenDetail = "LinkedEnrollmentId '$($l.LinkedEnrollmentId)' does not resolve to a present MMP-C enrollment."
+                break
+            }
+        }
+        if (-not $brokenReason) { $linkHealthy = $true }
+    }
+
+    # --- if the link is broken, attribute the cause via the network/TLS probe ---
+    # (TLS inspection is only meaningful as an explanation of a broken link, never as a
+    #  basis to triage an otherwise-healthy device - the inspection check is heuristic.)
+    if (-not $linkHealthy) {
+        $t = Test-MmpcEndpoint -HostName $MmpcDiscoveryHost
+        if (-not $t.TcpReachable) {
+            return & $verdict 'UNHEALTHY' 'MMPC_ENDPOINT_UNREACHABLE' "$MmpcDiscoveryHost unreachable - firewall/proxy egress problem."
+        }
+        if ($t.LikelyInspected) {
+            return & $verdict 'UNHEALTHY' 'MMPC_TLS_INSPECTION' "$MmpcDiscoveryHost cert issued by '$($t.ServerCertIssuer)' - looks like SSL inspection."
+        }
+        return & $verdict 'UNHEALTHY' $brokenReason $brokenDetail
+    }
+
+    # --- link healthy: check downstream, in priority order ---
+    $task = Get-MmpcEnrollmentTask
+    if ($task) {
+        return & $verdict 'UNHEALTHY' 'MMPC_STUCK_TASK' ("/EnrollMmpc task still present (LastResult: {0})." -f (@($task.LastResult) -join ','))
+    }
+
+    $badCert = Get-MmpcCertificate | Where-Object { -not $_.CertFound -or $_.Expired }
+    if ($badCert) {
+        return & $verdict 'UNHEALTHY' 'MMPC_CERT_MISSING' 'MMP-C device cert referenced by SSLClientCertSearchCriteria is missing or expired.'
+    }
+
+    $epm = Get-EpmAgentState
+    if ($epm.AgentBinaryPresent -and ("$($epm.AgentServiceStatus)" -ne 'Running')) {
+        return & $verdict 'UNHEALTHY' 'MMPC_AGENT_DOWN' "EPM agent installed but service '$($epm.AgentServiceName)' is '$($epm.AgentServiceStatus)'."
+    }
+
+    return & $verdict 'HEALTHY' 'MMPC_HEALTHY' 'MMP-C linked enrollment healthy.'
+}
+
+# ===========================================================================
 # orchestrator
 # ===========================================================================
 function Invoke-MmpcDiagnostics {
@@ -749,6 +848,28 @@ function Invoke-MmpcDiagnostics {
 # ===========================================================================
 # entry point
 # ===========================================================================
+
+# Proactive Remediation detection mode: emit ONE machine-readable line and exit.
+#   exit 0 = healthy or still-settling (do not triage)
+#   exit 1 = unhealthy (triage)
+# Fails safe: on internal error or non-elevated, emit a reason and exit 0 so a
+# script problem never floods the triage group.
+if ($AsRemediation) {
+    if (-not (Test-IsElevated)) {
+        Write-Output 'ERROR|MMPC_NOT_ELEVATED|Run as SYSTEM/admin (Proactive Remediation runs as SYSTEM).'
+        exit 0
+    }
+    try {
+        $v = Get-MmpcRemediationVerdict
+    }
+    catch {
+        Write-Output ('ERROR|MMPC_CHECK_ERROR|{0}' -f (("$($_.Exception.Message)") -replace '\s+', ' ').Trim())
+        exit 0
+    }
+    Write-Output ('{0}|{1}|{2}' -f $v.Status, $v.Reason, $v.Detail)
+    if ($v.Status -eq 'UNHEALTHY') { exit 1 } else { exit 0 }
+}
+
 $diag = Invoke-MmpcDiagnostics -Hours $EventLookbackHours -Live:$DiscoverEndpoints
 
 if ($CollectCab)          { Invoke-MdmDiagCab -OutputPath $CabOutputPath }
