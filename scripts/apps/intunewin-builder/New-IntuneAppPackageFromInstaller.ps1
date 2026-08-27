@@ -412,7 +412,7 @@ if ($chosenDetection -eq 'Auto') {
 
 if ($chosenDetection -eq 'File' -and -not $FileDetectionPath) { $FileDetectionPath = 'C:\Program Files\<AppFolder>\' + (Split-Path -Leaf $resolvedInstaller) }
 if ($chosenDetection -eq 'File' -and -not $FileDetectionVersion) { $FileDetectionVersion = $installerMeta.ProductVersion }
-if ($chosenDetection -eq 'Registry' -and -not $RegistryDetectionKey) { $RegistryDetectionKey = 'HKLM:SOFTWARE\<Vendor>\<AppName>' }
+if ($chosenDetection -eq 'Registry' -and -not $RegistryDetectionKey) { $RegistryDetectionKey = 'HKEY_LOCAL_MACHINE\SOFTWARE\<Vendor>\<AppName>' }
 
 $detectionMetadata = New-DetectionMetadata -InstallerMetadata $installerMeta -ChosenMethod $chosenDetection -FilePath $FileDetectionPath -FileVersion $FileDetectionVersion -RegKey $RegistryDetectionKey -RegValueName $RegistryDetectionValueName -RegValueData $RegistryDetectionValueData -MSIProductCode $installerMeta.ProductCode -CustomScript $CustomDetectionScriptPath
 
@@ -444,7 +444,7 @@ if ($PSCmdlet.ShouldProcess($expectedWinFile,'Create .intunewin package')) {
         if ($toolOutput) { Write-Verbose ($toolOutput -join [Environment]::NewLine) }
 
         # Primary expected naming pattern
-        $produced = Get-ChildItem -Path $intuneWinOutputDir -Filter ($setupFile + '.intunewin') -ErrorAction SilentlyContinue | Select-Object -First 1
+        $produced = Get-ChildItem -Path $intuneWinOutputDir -Filter ([IO.Path]::GetFileNameWithoutExtension($setupFile) + '.intunewin') -ErrorAction SilentlyContinue | Select-Object -First 1
         # Fallback: any .intunewin generated in output path after invocation start
         if (-not $produced) {
             $candidates = Get-ChildItem -Path $intuneWinOutputDir -Filter '*.intunewin' -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -ge $invokeStart.AddSeconds(-5) }
@@ -462,7 +462,7 @@ if ($PSCmdlet.ShouldProcess($expectedWinFile,'Create .intunewin package')) {
             $exitCode2 = $LASTEXITCODE
             Write-IntuneLog -Message "Retry exit code: $exitCode2" -Level Debug
             if ($toolOutput2) { Write-Warning ("IntuneWinAppUtil (retry) output:`n" + ($toolOutput2 -join [Environment]::NewLine)) }
-            $produced = Get-ChildItem -Path $intuneWinOutputDir -Filter ($setupFile + '.intunewin') -ErrorAction SilentlyContinue | Select-Object -First 1
+            $produced = Get-ChildItem -Path $intuneWinOutputDir -Filter ([IO.Path]::GetFileNameWithoutExtension($setupFile) + '.intunewin') -ErrorAction SilentlyContinue | Select-Object -First 1
             if (-not $produced) {
                 $produced = Get-ChildItem -Path $intuneWinOutputDir -Filter '*.intunewin' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
             }
