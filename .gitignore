@@ -27,3 +27,6 @@
 
 # Claude Code personal/local settings (machine-specific, not shared)
 .claude/settings.local.json
+
+# Local app packaging workspace (installers, built .intunewin packages, icons)
+/local-packages/
