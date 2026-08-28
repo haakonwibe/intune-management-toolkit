@@ -84,7 +84,8 @@ intune-management-toolkit/
 │       └── README.md                                 # Deploy & config guide
 │
 ├── docs/
-│   └── mmpc-triage-design.md                         # MMP-C health triage pipeline design
+│   ├── mmpc-triage-design.md                         # MMP-C health triage pipeline design
+│   └── remote-help-win32-packaging.html              # Remote Help + AVD unattended packaging reference
 │
 └── function-apps/
     └── app-dependency-manager/                       # Azure Function for app dependency automation
@@ -125,6 +126,8 @@ Automates creation of Win32 Intune (.intunewin) packages from common installer t
 **Key Features:** MSI metadata extraction, EXE heuristic detection (InnoSetup/NSIS/InstallShield), silent switch suggestions, Metadata.json + DetectionScript.ps1 generation, auto-downloads IntuneWinAppUtil.exe.
 
 **Flags:** `-Init` (environment setup & tool download), `-Browse` (interactive installer selection from a folder).
+
+**Worked example:** [Remote Help + AVD unattended packaging reference](./docs/remote-help-win32-packaging.html) — the three packages, their portal field values, detection rules and dependency chain.
 
 ### [App ID Lookup](./scripts/apps/app-id-lookup/)
 Scripts to resolve Microsoft application names and IDs via the Graph API service principal catalog.

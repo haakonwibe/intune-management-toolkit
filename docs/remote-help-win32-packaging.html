@@ -1,0 +1,716 @@
+<title>Remote Help Build Manifest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --ground:      #eef2f4;
+  --surface:     #ffffff;
+  --surface-alt: #f5f8f9;
+  --line:        #d3dde1;
+  --line-soft:   #e4ebee;
+  --ink:         #0d1a1f;
+  --ink-2:       #38505a;
+  --muted:       #6b828d;
+  --accent:      #0e6b73;
+  --accent-soft: #d8ecec;
+  --accent-ink:  #0a4f55;
+  --warn:        #9c5a06;
+  --warn-bg:     #fdf1dd;
+  --warn-line:   #e9c88a;
+  --ok:          #1f6b45;
+  --ok-bg:       #dcefe4;
+  --code-bg:     #eaf1f2;
+  --shadow:      0 1px 2px rgba(13,26,31,.05), 0 8px 24px -12px rgba(13,26,31,.18);
+
+  --step--1: .78rem;
+  --step-0:  .95rem;
+  --step-1:  1.1rem;
+  --step-2:  1.45rem;
+  --step-3:  2.1rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:      #0b1215;
+    --surface:     #121c21;
+    --surface-alt: #16232a;
+    --line:        #26383f;
+    --line-soft:   #1d2c33;
+    --ink:         #e6eef1;
+    --ink-2:       #b3c6ce;
+    --muted:       #7f97a2;
+    --accent:      #4dbec6;
+    --accent-soft: #123b3f;
+    --accent-ink:  #8ad8dd;
+    --warn:        #e3b071;
+    --warn-bg:     #2e2313;
+    --warn-line:   #5c4522;
+    --ok:          #6fc99a;
+    --ok-bg:       #14301f;
+    --code-bg:     #0d181c;
+    --shadow:      0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground:      #0b1215;
+  --surface:     #121c21;
+  --surface-alt: #16232a;
+  --line:        #26383f;
+  --line-soft:   #1d2c33;
+  --ink:         #e6eef1;
+  --ink-2:       #b3c6ce;
+  --muted:       #7f97a2;
+  --accent:      #4dbec6;
+  --accent-soft: #123b3f;
+  --accent-ink:  #8ad8dd;
+  --warn:        #e3b071;
+  --warn-bg:     #2e2313;
+  --warn-line:   #5c4522;
+  --ok:          #6fc99a;
+  --ok-bg:       #14301f;
+  --code-bg:     #0d181c;
+  --shadow:      0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+h1, h2, h3 {
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", ui-sans-serif, sans-serif;
+  text-wrap: balance;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+
+code, .mono, kbd {
+  font-family: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-variant-ligatures: none;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  gap: .9rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 2px solid var(--ink);
+}
+
+.eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.masthead h1 {
+  font-size: var(--step-3);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.standfirst {
+  color: var(--ink-2);
+  max-width: 46rem;
+  margin: 0;
+}
+
+.runline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.5rem;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--muted);
+  padding-top: .35rem;
+}
+.runline span b { color: var(--ink-2); font-weight: 500; }
+
+/* ---------- callout ---------- */
+
+.callout {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: .35rem 1rem;
+  padding: 1.15rem 1.35rem;
+  background: var(--ok-bg);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ok);
+  border-radius: 3px;
+}
+.callout .tag {
+  grid-row: 1 / span 2;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ok);
+  padding-top: .12rem;
+}
+.callout h3 { font-size: var(--step-1); font-weight: 600; }
+.callout p { margin: 0; color: var(--ink-2); font-size: var(--step-0); }
+.callout p + p { margin-top: .6rem; }
+
+/* ---------- section headers ---------- */
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: .9rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: .6rem;
+  margin-bottom: 1.25rem;
+}
+.section-head h2 { font-size: var(--step-2); font-weight: 600; }
+.section-head .note {
+  font-size: var(--step--1);
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+/* ---------- app card ---------- */
+
+.stack { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.15rem 1.35rem;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.seq {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 2px;
+  padding: .25rem .5rem;
+  letter-spacing: .06em;
+  white-space: nowrap;
+}
+
+.card-title { flex: 1 1 16rem; min-width: 0; }
+.card-title h3 { font-size: var(--step-1); font-weight: 600; }
+.card-title .pkg {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  color: var(--muted);
+  word-break: break-all;
+  display: block;
+  margin-top: .2rem;
+}
+
+.chips { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+.chip {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  padding: .2rem .5rem;
+  border-radius: 2px;
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  background: var(--surface);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.chip.ok { color: var(--ok); background: var(--ok-bg); border-color: transparent; }
+
+/* ---------- field table ---------- */
+
+.fields { display: flex; flex-direction: column; }
+
+.row {
+  display: grid;
+  grid-template-columns: 13rem 1fr;
+  gap: .35rem 1.25rem;
+  padding: .7rem 1.35rem;
+  border-bottom: 1px solid var(--line-soft);
+  align-items: baseline;
+}
+.row:last-child { border-bottom: 0; }
+
+.row .k {
+  font-size: var(--step--1);
+  color: var(--muted);
+  letter-spacing: .02em;
+}
+.row .v { min-width: 0; }
+
+.pane {
+  padding: .55rem 1.35rem .3rem;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--line-soft);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.val {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  max-width: 100%;
+}
+.val code {
+  background: var(--code-bg);
+  border: 1px solid var(--line-soft);
+  border-radius: 2px;
+  padding: .22rem .45rem;
+  font-size: .84rem;
+  color: var(--ink);
+  overflow-x: auto;
+  white-space: pre;
+  max-width: 100%;
+}
+.plain { color: var(--ink); }
+.dim { color: var(--muted); }
+
+.copy {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 2px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: .22rem .4rem;
+  cursor: pointer;
+  flex: none;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.copy:hover { color: var(--accent); border-color: var(--accent); }
+.copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.copy[data-done="1"] { color: var(--ok); border-color: var(--ok); }
+
+.flag {
+  display: inline-block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .68rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ok);
+  border: 1px solid transparent;
+  background: var(--ok-bg);
+  border-radius: 2px;
+  padding: .12rem .35rem;
+  margin-left: .4rem;
+  vertical-align: 1px;
+}
+
+.hint {
+  display: block;
+  font-size: var(--step--1);
+  color: var(--muted);
+  margin-top: .3rem;
+  max-width: 44rem;
+}
+
+/* ---------- dependency link ---------- */
+
+.dep {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  padding: .1rem 0 .1rem 1.35rem;
+  color: var(--accent);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: var(--step--1);
+}
+.dep .bar { width: 2px; height: 1.6rem; background: var(--accent); opacity: .5; flex: none; }
+
+/* ---------- provenance ---------- */
+
+table.prov {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step--1);
+}
+.scroller { overflow-x: auto; }
+table.prov th, table.prov td {
+  text-align: left;
+  padding: .55rem .8rem;
+  border-bottom: 1px solid var(--line-soft);
+  vertical-align: top;
+  white-space: nowrap;
+}
+table.prov th {
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .7rem;
+  border-bottom: 1px solid var(--line);
+}
+table.prov td.wrap-ok { white-space: normal; }
+table.prov td code { font-size: .8rem; color: var(--ink-2); }
+
+ul.notes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .55rem; color: var(--ink-2); }
+ul.notes strong { color: var(--ink); font-weight: 600; }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding-top: 1.25rem;
+  font-size: var(--step--1);
+  color: var(--muted);
+}
+footer code { font-size: .8rem; }
+footer p { margin: 0 0 .6rem; }
+footer p:last-child { margin-bottom: 0; }
+
+@media (max-width: 34rem) {
+  .row { grid-template-columns: 1fr; gap: .2rem; }
+  .row .k { letter-spacing: .06em; text-transform: uppercase; font-size: .7rem; font-family: "IBM Plex Mono", monospace; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Win32 package build · 27 Aug 2026</div>
+    <h1>Remote Help Build Manifest</h1>
+    <p class="standfirst">Three <code class="mono">.intunewin</code> packages built from Microsoft's current installers, with the exact values to transcribe into each Intune portal page. Attended support ships on its own; unattended support is an ordered pair.</p>
+    <div class="runline">
+      <span><b>Builder</b> New-IntuneAppPackageFromInstaller.ps1</span>
+      <span><b>Content Prep Tool</b> 1.8.7.0</span>
+      <span><b>Output</b> local-packages\IntunePackages\</span>
+    </div>
+  </header>
+
+  <div class="callout">
+    <div class="tag">Confirmed</div>
+    <h3>The installed binary reports a different version from the installer</h3>
+    <p>Checked on a reference machine: <code class="mono">C:\Program Files\Remote Help\RemoteHelp.exe</code> reports FileVersion <strong>10.4.10008.1000</strong>, while <code class="mono">remotehelpinstaller.exe</code> carries <code class="mono">5.2.1040.0</code>. Different schemes entirely — not two points on one line.</p>
+    <p>The detection rule below uses <strong>10.4.10008.1000</strong>, the installed value, which is the one Intune compares against. Had it been set from the installer's version, every device would report a failed install while running the app perfectly well. Re-check this after any future Remote Help refresh with:</p>
+    <p><span class="val"><code>(Get-Item "$env:ProgramFiles\Remote Help\RemoteHelp.exe").VersionInfo</code><button type="button" class="copy" data-copy='(Get-Item "$env:ProgramFiles\Remote Help\RemoteHelp.exe").VersionInfo'>Copy</button></span></p>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>Attended support</h2>
+      <span class="note">standalone · no dependencies</span>
+    </div>
+
+    <div class="stack">
+      <article class="card">
+        <div class="card-head">
+          <span class="seq">RH</span>
+          <div class="card-title">
+            <h3>Remote Help</h3>
+            <span class="pkg">Remote_Help_20260827-081641.intunewin</span>
+          </div>
+          <div class="chips">
+            <span class="chip">installer 5.2.1040.0</span>
+            <span class="chip">installs as 10.4.10008.1000</span>
+            <span class="chip">6.99 MB</span>
+            <span class="chip ok">Signature valid</span>
+          </div>
+        </div>
+
+        <div class="pane">App information</div>
+        <div class="fields">
+          <div class="row"><div class="k">Name</div><div class="v"><span class="plain">Remote Help</span></div></div>
+          <div class="row"><div class="k">Publisher</div><div class="v"><span class="plain">Microsoft</span></div></div>
+        </div>
+
+        <div class="pane">Program</div>
+        <div class="fields">
+          <div class="row">
+            <div class="k">Install command</div>
+            <div class="v"><span class="val"><code>remotehelpinstaller.exe /quiet acceptTerms=1</code><button type="button" class="copy" data-copy="remotehelpinstaller.exe /quiet acceptTerms=1">Copy</button></span>
+              <span class="hint"><code class="mono">acceptTerms</code> and <code class="mono">enableAutoUpdates</code> are case sensitive. To pin the version instead of letting the app self-update, append <code class="mono">enableAutoUpdates=0</code> — but then you own every future update.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Uninstall command</div>
+            <div class="v"><span class="val"><code>remotehelpinstaller.exe /uninstall /quiet acceptTerms=1</code><button type="button" class="copy" data-copy="remotehelpinstaller.exe /uninstall /quiet acceptTerms=1">Copy</button></span></div>
+          </div>
+          <div class="row"><div class="k">Install behavior</div><div class="v"><span class="plain">System</span> <span class="dim">— leave at default</span></div></div>
+        </div>
+
+        <div class="pane">Requirements</div>
+        <div class="fields">
+          <div class="row"><div class="k">OS architecture</div><div class="v"><span class="plain">x64</span></div></div>
+          <div class="row"><div class="k">Minimum OS</div><div class="v"><span class="dim">Set to your environment's floor</span></div></div>
+        </div>
+
+        <div class="pane">Detection rules — manually configure</div>
+        <div class="fields">
+          <div class="row"><div class="k">Rule type</div><div class="v"><span class="plain">File</span></div></div>
+          <div class="row"><div class="k">Path</div><div class="v"><span class="val"><code>C:\Program Files\Remote Help</code><button type="button" class="copy" data-copy="C:\Program Files\Remote Help">Copy</button></span></div></div>
+          <div class="row"><div class="k">File or folder</div><div class="v"><span class="val"><code>RemoteHelp.exe</code><button type="button" class="copy" data-copy="RemoteHelp.exe">Copy</button></span></div></div>
+          <div class="row"><div class="k">Detection method</div><div class="v"><span class="plain">String (version)</span></div></div>
+          <div class="row"><div class="k">Operator</div><div class="v"><span class="plain">Greater than or equal to</span></div></div>
+          <div class="row"><div class="k">Value</div><div class="v"><span class="val"><code>10.4.10008.1000</code><button type="button" class="copy" data-copy="10.4.10008.1000">Copy</button></span><span class="flag">verified on-device</span><span class="hint">The installed binary's version — deliberately not the installer's 5.2.1040.0.</span></div></div>
+          <div class="row"><div class="k">32-bit on 64-bit</div><div class="v"><span class="plain">No</span></div></div>
+        </div>
+
+        <div class="pane">Assignments</div>
+        <div class="fields">
+          <div class="row"><div class="k">Target</div><div class="v"><span class="plain">Device groups</span><span class="hint">Remote Help is only applicable to device targets — user group assignments won't install it.</span></div></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Unattended support</h2>
+      <span class="note">install order is enforced by the dependency</span>
+    </div>
+
+    <div class="stack">
+      <article class="card">
+        <div class="card-head">
+          <span class="seq">01</span>
+          <div class="card-title">
+            <h3>Remote Desktop Services Infrastructure Agent</h3>
+            <span class="pkg">Remote_Desktop_Services_Infrastructure_Agent_20260827-072326.intunewin</span>
+          </div>
+          <div class="chips">
+            <span class="chip">1.0.15008.300</span>
+            <span class="chip">90.35 MB</span>
+            <span class="chip ok">Signature valid</span>
+          </div>
+        </div>
+
+        <div class="pane">App information</div>
+        <div class="fields">
+          <div class="row"><div class="k">Name</div><div class="v"><span class="plain">Remote Desktop Services Infrastructure Agent</span><span class="hint">Keep this name — it's what you'll pick from the dependency list on the bootloader.</span></div></div>
+          <div class="row"><div class="k">Publisher</div><div class="v"><span class="plain">Microsoft</span></div></div>
+        </div>
+
+        <div class="pane">Program — Intune populates these from the MSI</div>
+        <div class="fields">
+          <div class="row">
+            <div class="k">Install command</div>
+            <div class="v"><span class="val"><code>msiexec /i "Microsoft.RDInfra.RDAgent.Installer-x64-1.0.15008.300.msi" /qn /norestart</code><button type="button" class="copy" data-copy='msiexec /i "Microsoft.RDInfra.RDAgent.Installer-x64-1.0.15008.300.msi" /qn /norestart'>Copy</button></span>
+              <span class="hint">No <code class="mono">REGISTRATIONTOKEN</code> — that's correct here. The token is an Azure Virtual Desktop host-pool concept; Remote Help unattended doesn't use one. Run interactively, the installer would prefill <code class="mono">INVALID_TOKEN</code> and proceed.</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Uninstall command</div>
+            <div class="v"><span class="val"><code>msiexec /x {9E517C03-7990-4800-A050-ED26F41A2091} /qn /norestart</code><button type="button" class="copy" data-copy="msiexec /x {9E517C03-7990-4800-A050-ED26F41A2091} /qn /norestart">Copy</button></span></div>
+          </div>
+        </div>
+
+        <div class="pane">Requirements</div>
+        <div class="fields">
+          <div class="row"><div class="k">Minimum OS</div><div class="v"><span class="plain">Windows 10 1607</span> <span class="dim">or later, per your environment</span></div></div>
+        </div>
+
+        <div class="pane">Detection rules — manually configure</div>
+        <div class="fields">
+          <div class="row"><div class="k">Rule type</div><div class="v"><span class="plain">MSI</span></div></div>
+          <div class="row"><div class="k">MSI product code</div><div class="v"><span class="val"><code>{9E517C03-7990-4800-A050-ED26F41A2091}</code><button type="button" class="copy" data-copy="{9E517C03-7990-4800-A050-ED26F41A2091}">Copy</button></span><span class="hint">Should populate automatically — confirm it matches this value.</span></div></div>
+        </div>
+
+        <div class="pane">Dependencies &amp; assignments</div>
+        <div class="fields">
+          <div class="row"><div class="k">Dependencies</div><div class="v"><span class="plain">None</span></div></div>
+          <div class="row"><div class="k">Assignments</div><div class="v"><span class="plain">Device groups</span></div></div>
+        </div>
+      </article>
+
+      <div class="dep"><span class="bar"></span><span>↓ bootloader depends on the agent · Automatically install = Yes</span></div>
+
+      <article class="card">
+        <div class="card-head">
+          <span class="seq">02</span>
+          <div class="card-title">
+            <h3>Remote Desktop Agent Boot Loader</h3>
+            <span class="pkg">Remote_Desktop_Agent_Boot_Loader_20260827-072330.intunewin</span>
+          </div>
+          <div class="chips">
+            <span class="chip">1.0.11388.1600</span>
+            <span class="chip">15.65 MB</span>
+            <span class="chip ok">Signature valid</span>
+          </div>
+        </div>
+
+        <div class="pane">App information</div>
+        <div class="fields">
+          <div class="row"><div class="k">Name</div><div class="v"><span class="plain">Remote Desktop Agent Boot Loader</span></div></div>
+          <div class="row"><div class="k">Publisher</div><div class="v"><span class="plain">Microsoft</span></div></div>
+        </div>
+
+        <div class="pane">Program — Intune populates these from the MSI</div>
+        <div class="fields">
+          <div class="row">
+            <div class="k">Install command</div>
+            <div class="v"><span class="val"><code>msiexec /i "Microsoft.RDInfra.RDAgentBootLoader.Installer-x64-1.0.11388.1600.msi" /qn /norestart</code><button type="button" class="copy" data-copy='msiexec /i "Microsoft.RDInfra.RDAgentBootLoader.Installer-x64-1.0.11388.1600.msi" /qn /norestart'>Copy</button></span></div>
+          </div>
+          <div class="row">
+            <div class="k">Uninstall command</div>
+            <div class="v"><span class="val"><code>msiexec /x {B7EAA4DF-2870-4386-910D-6465715A00BE} /qn /norestart</code><button type="button" class="copy" data-copy="msiexec /x {B7EAA4DF-2870-4386-910D-6465715A00BE} /qn /norestart">Copy</button></span></div>
+          </div>
+        </div>
+
+        <div class="pane">Requirements</div>
+        <div class="fields">
+          <div class="row"><div class="k">Minimum OS</div><div class="v"><span class="plain">Windows 10 1607</span> <span class="dim">or later, per your environment</span></div></div>
+        </div>
+
+        <div class="pane">Detection rules — manually configure</div>
+        <div class="fields">
+          <div class="row"><div class="k">Rule type</div><div class="v"><span class="plain">MSI</span></div></div>
+          <div class="row"><div class="k">MSI product code</div><div class="v"><span class="val"><code>{B7EAA4DF-2870-4386-910D-6465715A00BE}</code><button type="button" class="copy" data-copy="{B7EAA4DF-2870-4386-910D-6465715A00BE}">Copy</button></span></div></div>
+        </div>
+
+        <div class="pane">Dependencies &amp; assignments</div>
+        <div class="fields">
+          <div class="row"><div class="k">Dependency</div><div class="v"><span class="plain">Remote Desktop Services Infrastructure Agent</span><span class="hint">Add on the Dependencies page, keep <strong>Automatically install</strong> set to Yes. This is what guarantees the agent lands first.</span></div></div>
+          <div class="row"><div class="k">Assignments</div><div class="v"><span class="plain">Same device groups as the agent</span></div></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Provenance</h2>
+      <span class="note">downloaded and verified 27 Aug 2026</span>
+    </div>
+    <div class="scroller">
+      <table class="prov">
+        <thead>
+          <tr><th>Installer</th><th>Version</th><th>Source</th><th>Authenticode</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>remotehelpinstaller.exe</code></td>
+            <td>5.2.1040.0</td>
+            <td class="wrap-ok"><code>aka.ms/downloadremotehelp</code></td>
+            <td>Valid — Microsoft Corporation</td>
+          </tr>
+          <tr>
+            <td><code>Microsoft.RDInfra.RDAgent.Installer-x64</code></td>
+            <td>1.0.15008.300</td>
+            <td class="wrap-ok"><code>go.microsoft.com/fwlink/?linkid=2310011</code></td>
+            <td>Valid — Microsoft Corporation</td>
+          </tr>
+          <tr>
+            <td><code>Microsoft.RDInfra.RDAgentBootLoader.Installer-x64</code></td>
+            <td>1.0.11388.1600</td>
+            <td class="wrap-ok"><code>go.microsoft.com/fwlink/?linkid=2311028</code></td>
+            <td>Valid — Microsoft Corporation</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Before unattended sessions will work</h2>
+      <span class="note">outside the scope of these packages</span>
+    </div>
+    <ul class="notes">
+      <li><strong>Intune Management Extension</strong> must be present on the target device — it orchestrates the unattended session.</li>
+      <li><strong>Remote Desktop must be enabled</strong> on the device. A Settings Catalog configuration profile is the usual way in.</li>
+      <li><strong>Helpers need the permission</strong> <em>Remote Help app — Windows unattended control remote sign-in</em>, scoped to the target devices.</li>
+      <li><strong>The device must be awake and online.</strong> Asleep, hibernating, or shut-down devices can't take an unattended session.</li>
+      <li><strong>The agent self-updates</strong> once installed, and that process can't be controlled or paused. Expect the deployed version to drift upward from 1.0.15008.300 — which is why detection is by product code, not version.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Packages and sidecar <code>_Metadata.json</code> files are in <code>local-packages\IntunePackages\</code>; source installers in <code>local-packages\Installers\</code>. Both are gitignored. Rebuild any package with <code>scripts\apps\intunewin-builder\New-IntuneAppPackageFromInstaller.ps1</code>.</p>
+    <p><strong>Icons</strong> for all three apps are in <code>local-packages\Logo\</code>, named to match each app so the builder resolves them automatically. <code>Remote Help.png</code> is the 256&times;256 mark extracted from the installer's own icon resource; the two Azure Virtual Desktop components reuse it, since neither MSI carries any icon artwork of its own.</p>
+    <p>Source for this page lives at <code>docs\remote-help-win32-packaging.html</code> in the toolkit repo.</p>
+  </footer>
+
+</div>
+
+<script>
+document.addEventListener("click", function (e) {
+  var btn = e.target.closest(".copy");
+  if (!btn) return;
+  var text = btn.getAttribute("data-copy") || "";
+
+  function done() {
+    var prev = btn.textContent;
+    btn.textContent = "Copied";
+    btn.setAttribute("data-done", "1");
+    setTimeout(function () {
+      btn.textContent = prev;
+      btn.removeAttribute("data-done");
+    }, 1400);
+  }
+
+  function fallback() {
+    try {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      done();
+    } catch (err) {
+      // Clipboard unavailable — the value stays selectable in place.
+      btn.textContent = "Select it";
+      setTimeout(function () { btn.textContent = "Copy"; }, 1600);
+    }
+  }
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  } catch (err) {
+    fallback();
+  }
+});
+</script>
