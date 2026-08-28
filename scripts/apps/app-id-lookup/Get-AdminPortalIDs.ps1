@@ -1,4 +1,7 @@
 # --- CONFIGURATION ---
+# NOTE: Exported results include service principal ObjectIds, which are unique to the
+#       tenant this is run against. The output files are gitignored - do not commit
+#       them to this public repo.
 $CsvOutputPath = ".\AdminPortalAppIDs.csv"
 
 # The specific list of portals you requested

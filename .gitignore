@@ -30,3 +30,11 @@
 
 # Local app packaging workspace (installers, built .intunewin packages, icons)
 /local-packages/
+
+# App ID Lookup output — resolved ObjectIds are tenant-specific directory data, never commit
+/scripts/apps/app-id-lookup/*.csv
+/scripts/apps/app-id-lookup/*.xlsx
+
+# Azurite local storage emulator state
+/AzuriteConfig
+/__azurite_db_*.json

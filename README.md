@@ -138,6 +138,8 @@ Scripts to resolve Microsoft application names and IDs via the Graph API service
 
 **Key Features:** Graph-based lookup, deduplication, CSV export, handles missing apps gracefully.
 
+> **Output is tenant data.** The resolved `ObjectId` values are service principal object IDs unique to the tenant the scripts run against (unlike `ApplicationId`, which is a global Microsoft constant). The exported `.csv`/`.xlsx` files are gitignored — regenerate them per tenant rather than committing them.
+
 ### [Regional Settings Deployment](./scripts/regional-settings/)
 Intune Win32 app that configures Windows region, locale, and timezone during Autopilot enrollment. Runs as SYSTEM during ESP to set defaults before the user reaches the desktop. Two modes:
 
