@@ -1028,6 +1028,65 @@ function New-CisChromePolicyBody {
     }
 }
 
+function Get-CoverageGapReason {
+    # One short phrase for why an in-profile recommendation is not in the policy
+    param([Parameter(Mandatory)]$Row)
+    $notes = @($Row.Notes) -join ' | '
+    switch ($Row.Status) {
+        'NoDefinition' {
+            if ($notes -match 'recommended variant, excluded by design') { return "Intune has only the user-overridable 'recommended' setting" }
+            if ($notes -match "namespace '([^']+)' not selected") { return "definition only in namespace $($Matches[1]) (not selected)" }
+            return 'not in the Intune Settings Catalog'
+        }
+        'OutOfScope' {
+            if ($Row.RegistryValue -match '^Update[:\\]') { return 'Google Update policy, not in the Settings Catalog' }
+            return 'outside the Chrome policy key'
+        }
+        'NotInGpo' { return 'no value in the Build Kit' }
+        'Ambiguous' { return 'more than one matching definition' }
+        'UnsupportedShape' { return 'value shape not supported' }
+        'Conflict' { return 'Build Kit value contradicts the CIS remediation' }
+        'NoRegistryPath' { return 'no registry path in the CIS audit text' }
+        default { return $Row.Status }
+    }
+}
+
+function New-CisChromePolicyDescription {
+    <#
+    .SYNOPSIS
+        Policy description: a provenance header plus every in-profile recommendation the policy does not cover.
+    .DESCRIPTION
+        Intune shows the description on the policy itself, so the gaps are visible without coverage.md.
+        Intune doesn't document a description limit; MaxLength (default 1000) is a conservative cap.
+        When the full list doesn't fit, it falls back to the setting names only, then to CIS IDs only,
+        and finally truncates. Every fallback points to coverage.md.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][string]$Header,
+        [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$Coverage,
+        [ValidateRange(100, 100000)][int]$MaxLength = 1000
+    )
+    $gaps = @($Coverage | Where-Object Status -ne 'Mapped' | Sort-Object { ConvertTo-SortableCisId $_.CisId })
+    if (-not $gaps) {
+        $text = "$Header Covers all $($Coverage.Count) in-profile recommendations."
+    } else {
+        $intro = "Not covered by this policy ($($gaps.Count) of $($Coverage.Count) recommendations):"
+        $more = ' Details: coverage.md.'
+        $title = { param($r) ($r.Title -replace '^\s*\(?L\d\)?\s*-?\s*Ensure\s+', '').Trim() }
+        $name = { param($r) $t = & $title $r; if ($t -match "^'([^']+)'") { $Matches[1] } else { $t } }
+        $candidates = @(
+            ((@($Header, $intro) + @($gaps | ForEach-Object { "- $($_.CisId) $(& $title $_): $(Get-CoverageGapReason $_)" })) -join "`n")
+            ((@($Header, $intro) + @($gaps | ForEach-Object { "- $($_.CisId) $(& $name $_): $(Get-CoverageGapReason $_)" })) -join "`n") + $more
+            "$Header`nNot covered by this policy: $(@($gaps.CisId) -join ', ').$more"
+        )
+        $text = $candidates | Where-Object { $_.Length -le $MaxLength } | Select-Object -First 1
+        if (-not $text) { $text = $candidates[-1] }
+    }
+    if ($text.Length -gt $MaxLength) { $text = $text.Substring(0, $MaxLength - 1) + [char]0x2026 }
+    $text
+}
+
 function Compare-CisChromePolicy {
     <#
     .SYNOPSIS
@@ -1430,7 +1489,7 @@ Export-ModuleMember -Function @(
     'Read-RegistryPolFile', 'ConvertTo-ChromeGpoPolicy', 'Add-SupplementalGpoPolicy'
     'Read-XlsxWorksheet', 'Import-CisBenchmarkWorkbook', 'Get-CisRegistryReference', 'Get-CisBenchmarkVersion'
     'Get-DefinitionNamespace', 'New-ChromeDefinitionIndex', 'Find-ChromeSettingDefinition', 'New-ChromeSettingInstance'
-    'Invoke-CisChromeMapping', 'ConvertTo-SettingValueMap', 'New-CisChromePolicyBody', 'Compare-CisChromePolicy'
+    'Invoke-CisChromeMapping', 'ConvertTo-SettingValueMap', 'New-CisChromePolicyBody', 'New-CisChromePolicyDescription', 'Compare-CisChromePolicy'
     'ConvertTo-CoverageMarkdown', 'ConvertTo-CompareMarkdown'
     'Invoke-CisGraphRequest', 'Get-CisGraphCollection', 'Get-ChromeSettingDefinitionFromGraph', 'Get-CisConfigurationPolicy'
 )

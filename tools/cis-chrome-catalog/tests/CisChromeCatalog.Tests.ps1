@@ -549,6 +549,64 @@ Describe 'Reports' {
         $r = [pscustomobject]@{ Coverage = @([pscustomobject]@{ CisId = '1'; Title = 'a | b'; RegistryValue = $null; Expected = $null; DefinitionId = $null; Status = 'NotInGpo'; Notes = @() }); Settings = @(); UnmatchedGpo = @() }
         ConvertTo-CoverageMarkdown -Result $r | Should -Match 'a \\\| b'
     }
+
+    Context 'New-CisChromePolicyDescription' {
+        BeforeAll {
+            $script:Mapped = Invoke-CisChromeMapping -Recommendations $Recs -GpoPolicies $Gpo -Index $Index
+            function script:Row($Id, $Status, $Reg, $Notes, $Title = "(L1) Ensure 'P$Id' is set to 'Enabled'") {
+                [pscustomobject]@{ CisId = $Id; Title = $Title; RegistryValue = $Reg; Status = $Status; Notes = @($Notes) }
+            }
+        }
+
+        It 'lists every uncovered recommendation in CIS order, with a reason' {
+            $d = New-CisChromePolicyDescription -Header 'H.' -Coverage $Mapped.Coverage -MaxLength 100000
+            $d | Should -Match "^H\.`nNot covered by this policy \(7 of 16 recommendations\):`n"
+            $lines = @($d -split "`n" | Where-Object { $_ -like '- *' })
+            ($lines | ForEach-Object { ($_ -split ' ')[1] }) | Should -Be @('1.8', '1.10', '1.11', '1.12', '1.13', '1.15', '2.1')
+            $d | Should -Match "(?m)^- 1\.8 'Ambiguous policy' is set to 'Enabled': more than one matching definition$"
+            $d | Should -Match "(?m)^- 2\.1 'Auto-update check period override' .*: Google Update policy, not in the Settings Catalog$"
+            $d | Should -Not -Match 'Ensure|Details: coverage\.md'
+        }
+
+        It 'explains recommended-only and unselected-namespace gaps' {
+            $cov = @(
+                Row '1' 'NoDefinition' 'Chrome\Recommended:A' 'Exists as x (recommended variant, excluded by design)'
+                Row '2' 'NoDefinition' 'Chrome:B' "Exists as y (namespace 'chromeintunev999' not selected)"
+                Row '3' 'NoDefinition' 'Chrome:C' $null -Title "L1 - Ensure 'P3' is set to 'Enabled'"
+                Row '4' 'Mapped' 'Chrome:D' $null
+            )
+            $d = New-CisChromePolicyDescription -Header 'H.' -Coverage $cov
+            $d | Should -Match '\(3 of 4 recommendations\)'
+            $d | Should -Match "(?m)^- 1 'P1' is set to 'Enabled': Intune has only the user-overridable 'recommended' setting$"
+            $d | Should -Match "(?m)^- 2 'P2' .*: definition only in namespace chromeintunev999 \(not selected\)$"
+            $d | Should -Match "(?m)^- 3 'P3' is set to 'Enabled': not in the Intune Settings Catalog$"
+        }
+
+        It 'says so when everything is covered' {
+            New-CisChromePolicyDescription -Header 'H.' -Coverage @(Row '1' 'Mapped' 'Chrome:A' $null) |
+                Should -Be 'H. Covers all 1 in-profile recommendations.'
+        }
+
+        It 'shortens to setting names, then CIS IDs, then truncates to fit MaxLength' {
+            $pad = 'x' * 80
+            $cov = 1..3 | ForEach-Object { Row "$_" 'NoDefinition' "Chrome:P$_" $null -Title "(L1) Ensure 'Name$_' is set to 'Enabled: $pad'" }
+            $full = New-CisChromePolicyDescription -Header 'H.' -Coverage $cov -MaxLength 100000
+            $full | Should -Match $pad
+
+            $names = New-CisChromePolicyDescription -Header 'H.' -Coverage $cov -MaxLength ($full.Length - 1)
+            $names.Length | Should -BeLessThan $full.Length
+            $names | Should -Not -Match $pad
+            $names | Should -Match "(?m)^- 2 Name2: not in the Intune Settings Catalog$"
+            $names | Should -Match 'Details: coverage\.md\.$'
+
+            New-CisChromePolicyDescription -Header 'H.' -Coverage $cov -MaxLength 100 |
+                Should -Be "H.`nNot covered by this policy: 1, 2, 3. Details: coverage.md."
+
+            $cut = New-CisChromePolicyDescription -Header ('H' * 150) -Coverage $cov -MaxLength 100
+            $cut.Length | Should -Be 100
+            $cut | Should -Match "$([char]0x2026)$"
+        }
+    }
 }
 
 Describe 'Graph wrappers (mocked)' {
@@ -633,6 +691,8 @@ Describe 'Invoke-CisChromeCatalog.ps1' {
         $policy.technologies | Should -Be 'mdm'
         $policy.psobject.Properties.Name | Should -Not -Contain 'assignments'
         @($policy.settings).Count | Should -Be 9
+        $policy.description | Should -Match '^CIS Google Chrome Benchmark v9\.8\.7 \(L1\)\. .* 9 settings\.\nNot covered by this policy \(7 of 16 recommendations\):\n- 1\.8 '
+        $policy.description.Length | Should -BeLessOrEqual 1000
         Get-Content (Join-Path $out 'coverage.md') -Raw | Should -Match 'Conflict'
     }
 

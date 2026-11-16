@@ -60,6 +60,16 @@ $xlsx = '.\CIS_Google_Chrome_Group_Policy_Benchmark_v1.1.1.xlsx'
 
 The script returns an object (`PolicyName`, `SettingCount`, `Coverage`, `UnmatchedGpo`, `Diff`, `CreatedPolicyId`, file paths) for further scripting.
 
+The policy **description** records where the policy came from (benchmark version, Build Kit, supplemental file, date). It also lists every in-profile recommendation the policy does **not** cover, with a short reason, so the gaps are visible in Intune without coverage.md:
+
+```
+Not covered by this policy (5 of 102 recommendations):
+- 2.93 'Restrict Background Fetch API when called from a Service Worker' is set to 'Enabled': not in the Intune Settings Catalog
+- 4.1 'Auto-update check period override' is set to any value except `0`: Google Update policy, not in the Settings Catalog
+```
+
+Intune doesn't document a maximum length for the description, so the tool caps it at 1000 characters. When the full list doesn't fit, it shortens to setting names, then to CIS IDs only, and points to coverage.md.
+
 ## How the mapping works
 
 1. **registry.pol.** The tool parses the PReg file and keeps `Software\Policies\Google\Chrome`:
