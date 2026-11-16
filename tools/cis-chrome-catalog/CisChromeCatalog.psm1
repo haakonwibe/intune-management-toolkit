@@ -750,6 +750,65 @@ function New-ChromeSettingInstance {
 
 #endregion
 
+#region Supplemental values
+
+function Add-SupplementalGpoPolicy {
+    <#
+    .SYNOPSIS
+        Merges extra Chrome registry values (not in the Build Kit) into the GPO policy list.
+
+    .DESCRIPTION
+        For recommendations the Build Kit does not set: values added in a newer workbook, or
+        org-specific values ("Is Configured" items). -Values maps a Chrome policy name to:
+            [int]/[long]  REG_DWORD scalar   (boolean 0/1, enum value, integer)
+            [string]      REG_SZ scalar
+            [array]       list policy (Chrome\<Policy>\1..N)
+        A supplemental value replaces a registry.pol value of the same name (noted). Results carry
+        a note naming the source, so coverage.md shows where every value came from.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][AllowEmptyCollection()][object[]]$GpoPolicies,
+        [Parameter(Mandatory)][System.Collections.IDictionary]$Values,
+        [string]$SourceName = 'supplemental values'
+    )
+
+    $root = $script:ChromePolicyRoot
+    $result = [System.Collections.Generic.List[object]]::new()
+    $replaced = @{}
+    $added = foreach ($name in $Values.Keys) {
+        if ($name -notmatch '^[A-Za-z][A-Za-z0-9]*$') { throw "Supplemental key '$name' is not a Chrome policy name" }
+        $v = $Values[$name]
+        $p = [pscustomobject]@{
+            PolicyName = [string]$name; Kind = $null; Recommended = $false; RegistryKey = $root
+            ValueType = $null; Value = $null; Entries = @(); Notes = [System.Collections.Generic.List[string]]::new()
+        }
+        if ($v -is [int] -or $v -is [long]) {
+            if ($v -lt 0 -or $v -gt [uint32]::MaxValue) { throw "Supplemental '$name': $v is outside the REG_DWORD range" }
+            $p.Kind = 'Scalar'; $p.ValueType = 'REG_DWORD'; $p.Value = [uint32]$v
+        } elseif ($v -is [string]) {
+            $p.Kind = 'Scalar'; $p.ValueType = 'REG_SZ'; $p.Value = $v
+        } elseif ($v -is [System.Collections.IEnumerable] -and $v -isnot [System.Collections.IDictionary]) {
+            $items = @($v)
+            if (-not $items -or @($items | Where-Object { $_ -isnot [string] -or -not $_ })) { throw "Supplemental '$name': a list must hold one or more non-empty strings" }
+            $p.Kind = 'List'; $p.ValueType = 'REG_SZ'; $p.Value = [string[]]$items; $p.RegistryKey = "$root\$name"
+        } else {
+            throw "Supplemental '$name': unsupported value type $($v.GetType().Name) (use an integer, a string or an array of strings)"
+        }
+        $prior = $GpoPolicies | Where-Object { $_.PolicyName -eq $name -and $_.Kind -ne 'OutOfScope' -and -not $_.Recommended } | Select-Object -First 1
+        $p.Notes.Add("Value from $SourceName (not from the Build Kit registry.pol)")
+        if ($prior) { $p.Notes.Add("Overrides registry.pol value $($prior.Display)"); $replaced[$prior] = $true }
+        $p | Add-Member -NotePropertyName Display -NotePropertyValue (Format-GpoPolicyValue -Policy $p)
+        $p | Add-Member -NotePropertyName RegistryRef -NotePropertyValue (Format-RegistryReference -Path "HKLM\$($p.RegistryKey)" -ValueName $(if ($p.Kind -eq 'List') { $null } else { $p.PolicyName }))
+        $p
+    }
+    foreach ($g in $GpoPolicies) { if (-not $replaced.ContainsKey($g)) { $result.Add($g) } }
+    foreach ($a in $added) { $result.Add($a) }
+    $result.ToArray()
+}
+
+#endregion
+
 #region Pipeline
 
 function Invoke-CisChromeMapping {
@@ -1138,7 +1197,7 @@ function Invoke-CisGraphRequest {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][ValidateSet('GET', 'POST')][string]$Method,
+        [Parameter(Mandatory)][ValidateSet('GET', 'POST', 'PUT')][string]$Method,
         [Parameter(Mandatory)][string]$Uri,
         $Body,
         [int]$MaxRetries = 4
@@ -1368,7 +1427,7 @@ function ConvertFrom-XlsxColumnRef {
 #endregion
 
 Export-ModuleMember -Function @(
-    'Read-RegistryPolFile', 'ConvertTo-ChromeGpoPolicy'
+    'Read-RegistryPolFile', 'ConvertTo-ChromeGpoPolicy', 'Add-SupplementalGpoPolicy'
     'Read-XlsxWorksheet', 'Import-CisBenchmarkWorkbook', 'Get-CisRegistryReference', 'Get-CisBenchmarkVersion'
     'Get-DefinitionNamespace', 'New-ChromeDefinitionIndex', 'Find-ChromeSettingDefinition', 'New-ChromeSettingInstance'
     'Invoke-CisChromeMapping', 'ConvertTo-SettingValueMap', 'New-CisChromePolicyBody', 'Compare-CisChromePolicy'

@@ -118,6 +118,46 @@ Describe 'ConvertTo-ChromeGpoPolicy' {
     }
 }
 
+Describe 'Add-SupplementalGpoPolicy' {
+    It 'turns integers, strings and arrays into DWORD, SZ and list policies' {
+        $p = @(Add-SupplementalGpoPolicy -GpoPolicies @() -Values ([ordered]@{ PasswordSharingEnabled = 0; ProxySettings = '{"ProxyMode": "direct"}'; HttpAllowlist = @('example.org') }) -SourceName 's.psd1')
+        $b = $p | Where-Object PolicyName -eq 'PasswordSharingEnabled'
+        $b.Kind | Should -Be 'Scalar'; $b.ValueType | Should -Be 'REG_DWORD'; $b.Value | Should -Be 0
+        $b.RegistryRef | Should -Be 'Chrome:PasswordSharingEnabled'
+        $b.Notes | Should -Match 's\.psd1'
+        ($p | Where-Object PolicyName -eq 'ProxySettings').ValueType | Should -Be 'REG_SZ'
+        $l = $p | Where-Object PolicyName -eq 'HttpAllowlist'
+        $l.Kind | Should -Be 'List'; $l.Value | Should -Be @('example.org'); $l.RegistryRef | Should -Be 'Chrome\HttpAllowlist'
+    }
+
+    It 'replaces a registry.pol value of the same name and says so' {
+        $p = @(Add-SupplementalGpoPolicy -GpoPolicies $Gpo -Values @{ DiskCacheSize = 1000 })
+        $d = @($p | Where-Object PolicyName -eq 'DiskCacheSize')
+        $d.Count | Should -Be 1
+        $d[0].Value | Should -Be 1000
+        ($d[0].Notes -join ' | ') | Should -Match 'Overrides registry.pol value 250609664'
+        $p.Count | Should -Be $Gpo.Count
+    }
+
+    It 'rejects <Case>' -ForEach @(
+        @{ Case = 'a boolean'; Values = @{ X = $true } }
+        @{ Case = 'a hashtable'; Values = @{ X = @{ a = 1 } } }
+        @{ Case = 'an empty list'; Values = @{ X = @() } }
+        @{ Case = 'a negative integer'; Values = @{ X = -1 } }
+        @{ Case = 'a key that is not a policy name'; Values = @{ 'Chrome\X' = 1 } }
+    ) {
+        { Add-SupplementalGpoPolicy -GpoPolicies @() -Values $Values } | Should -Throw
+    }
+
+    It 'moves a NotInGpo recommendation into definition matching' {
+        $p = @(Add-SupplementalGpoPolicy -GpoPolicies $Gpo -Values @{ PasswordManagerEnabled = 0 })
+        $r = Invoke-CisChromeMapping -Recommendations $Recs -GpoPolicies $p -Index $Index
+        $row = $r.Coverage | Where-Object CisId -eq '1.12'
+        $row.Status | Should -Be 'NoDefinition'    # no PasswordManagerEnabled definition in the fixture set
+        ($row.Notes -join ' | ') | Should -Match 'supplemental'
+    }
+}
+
 Describe 'Read-XlsxWorksheet' {
     It 'lists worksheets in workbook order' {
         Read-XlsxWorksheet -Path (Join-Path $Fixtures 'workbook.xlsx') -ListWorksheets | Should -Be @('Overview', 'Combined Profiles')
@@ -619,6 +659,52 @@ Describe 'Invoke-CisChromeCatalog.ps1' {
             if ($Method -eq 'POST') { throw 'must not POST' } else { '{"value":[{"id":"dupe","name":"CIS Google Chrome Benchmark v9.8.7 - L1"}]}' }
         }
         { & $Script @Common -OutputPath (Join-Path $TestDrive 'dupe') -Create -Confirm:$false } | Should -Throw '*already exists*'
+    }
+
+    It '-SupplementalValuesPath feeds extra values into the policy' {
+        Mock -ModuleName CisChromeCatalog Invoke-MgGraphRequest { throw 'no Graph in a dry run' }
+        $supp = Join-Path $TestDrive 'supp.psd1'
+        Set-Content -LiteralPath $supp -Value "@{ DiskCacheSize = 1000 }"
+        $out = Join-Path $TestDrive 'supp-out'
+        $r = & $Script @Common -OutputPath $out -SupplementalValuesPath $supp
+        ($r.Coverage | Where-Object CisId -eq '1.3').Expected | Should -Be 'Enabled: 1000'
+        Get-Content (Join-Path $out 'coverage.md') -Raw | Should -Match 'Supplemental values\*\*: .*supp\.psd1'
+    }
+
+    Context '-UpdatePolicyId' {
+        BeforeAll {
+            $script:Existing = '{"id":"p1","name":"My Chrome baseline","platforms":"windows10","technologies":"mdm","roleScopeTagIds":["0","5"],"settingCount":3,"templateReference":{"templateId":""}}'
+        }
+
+        It 'PUTs the mapped settings, keeping the policy name and scope tags' {
+            Mock -ModuleName CisChromeCatalog Invoke-MgGraphRequest { if ($Method -eq 'PUT') { '' } else { $Existing } }
+            $r = & $Script @Common -OutputPath (Join-Path $TestDrive 'upd') -UpdatePolicyId 'p1' -Confirm:$false
+            $r.UpdatedPolicyId | Should -Be 'p1'
+            Should -Invoke -ModuleName CisChromeCatalog Invoke-MgGraphRequest -Times 1 -Exactly -ParameterFilter {
+                $Method -eq 'PUT' -and $Uri -like "*configurationPolicies('p1')" -and ($b = $Body | ConvertFrom-Json) -and
+                $b.name -eq 'My Chrome baseline' -and (@($b.roleScopeTagIds) -join ',') -eq '0,5' -and @($b.settings).Count -eq 9
+            }
+        }
+
+        It 'does not PUT with -WhatIf' {
+            Mock -ModuleName CisChromeCatalog Invoke-MgGraphRequest { if ($Method -eq 'PUT') { throw 'must not PUT' } else { $Existing } }
+            $null = & $Script @Common -OutputPath (Join-Path $TestDrive 'upd-wi') -UpdatePolicyId 'p1' -WhatIf
+            Should -Invoke -ModuleName CisChromeCatalog Invoke-MgGraphRequest -ParameterFilter { $Method -eq 'PUT' } -Times 0 -Exactly
+        }
+
+        It 'refuses a policy that is not windows10/mdm' {
+            Mock -ModuleName CisChromeCatalog Invoke-MgGraphRequest { '{"id":"p1","name":"Mac","platforms":"macOS","technologies":"mdm,appleRemoteManagement","roleScopeTagIds":["0"],"settingCount":3}' }
+            { & $Script @Common -OutputPath (Join-Path $TestDrive 'upd-mac') -UpdatePolicyId 'p1' -Confirm:$false } | Should -Throw '*not a windows10/mdm*'
+        }
+
+        It 'refuses a template-based policy' {
+            Mock -ModuleName CisChromeCatalog Invoke-MgGraphRequest { '{"id":"p1","name":"Baseline","platforms":"windows10","technologies":"mdm","roleScopeTagIds":["0"],"settingCount":3,"templateReference":{"templateId":"tpl-1"}}' }
+            { & $Script @Common -OutputPath (Join-Path $TestDrive 'upd-tpl') -UpdatePolicyId 'p1' -Confirm:$false } | Should -Throw '*template*'
+        }
+
+        It 'cannot be combined with -Create' {
+            { & $Script @Common -OutputPath (Join-Path $TestDrive 'upd-both') -UpdatePolicyId 'p1' -Create } | Should -Throw '*mutually exclusive*'
+        }
     }
 
     It '-CompareTo writes a compare report' {

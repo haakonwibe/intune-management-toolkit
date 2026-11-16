@@ -38,6 +38,10 @@ $xlsx = '.\CIS_Google_Chrome_Group_Policy_Benchmark_v1.1.1.xlsx'
 # Create (unassigned). -WhatIf shows what would be created.
 .\tools\cis-chrome-catalog\Invoke-CisChromeCatalog.ps1 -GpoBackupPath $gpo -WorkbookPath $xlsx -Create -WhatIf
 .\tools\cis-chrome-catalog\Invoke-CisChromeCatalog.ps1 -GpoBackupPath $gpo -WorkbookPath $xlsx -Create
+
+# Add values the Build Kit lacks, then push the full set to the existing policy (PUT)
+.\tools\cis-chrome-catalog\Invoke-CisChromeCatalog.ps1 -GpoBackupPath $gpo -WorkbookPath $xlsx `
+    -SupplementalValuesPath .\tools\cis-chrome-catalog\supplemental.example.psd1 -UpdatePolicyId <policyId>
 ```
 
 | Parameter | Default | Notes |
@@ -50,6 +54,8 @@ $xlsx = '.\CIS_Google_Chrome_Group_Policy_Benchmark_v1.1.1.xlsx'
 | `-OutputPath` | `.\cis-chrome-catalog-out` | `policy.json`, `coverage.md`, `compare-<id>.md` |
 | `-PolicyName` | `CIS Google Chrome Benchmark v<ver> - L1` | Version is read from the workbook (`-BenchmarkVersion` to override) |
 | `-Create` | off | POST to `/beta/deviceManagement/configurationPolicies` (windows10, mdm, unassigned). Refuses if the name exists unless `-Force` |
+| `-UpdatePolicyId` | – | Replace an existing windows10/mdm policy's settings (PUT). Keeps its name (unless `-PolicyName`), scope tags and assignments. Refuses template-based policies. Not combinable with `-Create` |
+| `-SupplementalValuesPath` | – | `.psd1` of extra Chrome values the Build Kit doesn't set (see below) |
 | `-CompareTo` | – | Policy id to diff |
 
 The script returns an object (`PolicyName`, `SettingCount`, `Coverage`, `UnmatchedGpo`, `Diff`, `CreatedPolicyId`, file paths) for further scripting.
@@ -90,6 +96,23 @@ Intune publishes the Chrome ADMX in more than one namespace. Older policies are 
 The default selects both `chromeintunev1` and `chromeintunev141`. As of November 2026 they share no policy names: 431 and 200 mandatory device roots respectively. Against benchmark v1.1.1 L1, v1 alone maps 65 recommendations and both together map 87.
 
 If a policy ever appears in more than one selected namespace, it becomes `Ambiguous` rather than being picked silently. When Microsoft publishes a newer namespace, a `NoDefinition` row says the policy exists there, and the script prints the `-DefinitionNamespace` value that would include it. To restrict matching to the original namespace, pass `-DefinitionNamespace chromeintunev1`.
+
+### Supplemental values
+
+Some L1 recommendations have no value in the Build Kit. Either the workbook is newer than the Build Kit (v1.1.1 vs v1.1.0), or the recommendation is an "Is Configured" item whose value depends on your organization. Put those in a `.psd1` and pass it with `-SupplementalValuesPath`:
+
+```powershell
+@{
+    PasswordSharingEnabled  = 0                  # integer -> REG_DWORD (0 = Disabled)
+    ChromeVariations        = 0                  # enum value
+    ProxySettings           = '{"ProxyMode": "system"}'   # string -> REG_SZ
+    ClipboardAllowedForUrls = @('example.org')   # array -> list policy
+}
+```
+
+Supplemental values go through the same definition matching, shape checks and CIS remediation-state check as registry.pol values. A supplemental value replaces a registry.pol value of the same name, and coverage.md notes where each value came from.
+
+`supplemental.example.psd1` fills the 10 v1.1.1 L1 gaps: four prescribed values, four `example.org` placeholders, and the two password manager items set to Disabled. Copy it before adding real organization values.
 
 ## coverage.md statuses
 
