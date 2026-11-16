@@ -16,7 +16,9 @@
     ChromeVariations                             = 0   # 2.34    Enabled: Enable all variations (0)
 
     # --- "Is Configured" items: organization-specific (placeholders) ------------------------
-    ClipboardAllowedForUrls          = @('example.org')   # 2.3.1   sites allowed to use the clipboard
+    # Allow and block lists must not share a pattern: contoso.com stands in for your own sites,
+    # example.org for a site you block.
+    ClipboardAllowedForUrls          = @('contoso.com')   # 2.3.1   sites allowed to use the clipboard
     ClipboardBlockedForUrls          = @('example.org')   # 2.3.2   sites blocked from the clipboard
     HttpAllowlist                    = @('example.org')   # 2.54    hosts exempt from HTTPS upgrades/warnings
     RemoteAccessHostClientDomainList = @('example.org')   # 2.14.5  domains allowed as remote access clients

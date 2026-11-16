@@ -122,7 +122,7 @@ Some L1 recommendations have no value in the Build Kit. Either the workbook is n
 
 Supplemental values go through the same definition matching, shape checks and CIS remediation-state check as registry.pol values. A supplemental value replaces a registry.pol value of the same name, and coverage.md notes where each value came from.
 
-`supplemental.example.psd1` fills the 10 v1.1.1 L1 gaps: four prescribed values, four `example.org` placeholders, and the two password manager items set to Disabled. Copy it before adding real organization values.
+`supplemental.example.psd1` fills the 10 v1.1.1 L1 gaps: four prescribed values, four placeholder lists (`contoso.com` on the clipboard allow list, `example.org` on the others), and the two password manager items set to Disabled. Copy it before adding real organization values.
 
 ## coverage.md statuses
 
