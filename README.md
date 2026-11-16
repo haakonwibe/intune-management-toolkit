@@ -78,6 +78,12 @@ intune-management-toolkit/
 │       ├── IntuneToolkit.psm1
 │       └── IntuneToolkit.psd1
 │
+├── tools/
+│   └── cis-chrome-catalog/                           # CIS Chrome Benchmark → Settings Catalog policy builder
+│       ├── Invoke-CisChromeCatalog.ps1               # Dry run / -Create / -CompareTo
+│       ├── CisChromeCatalog.psm1                     # PReg + xlsx parsing, definition mapping, diff
+│       └── tests/                                    # Pester suite + fixtures
+│
 ├── automation/
 │   └── mmpc-triage/                                  # Azure Automation runbook: MMP-C triage orchestrator
 │       ├── Invoke-MmpcTriageOrchestrator.ps1         # Reconciles triage groups from PR results (report-only → -Apply)
@@ -265,6 +271,11 @@ Diagnoses the **MMP-C / linked (dual) enrollment** channel that delivers Endpoin
 **Flags:** `-DiscoverEndpoints` (live discovery probe), `-Json` / `-JsonPath` (timestamped JSON report), `-PassThru` (return the result object), `-CollectCab` (MdmDiagnosticsTool cab), `-TriggerReEnrollment` (re-fires `deviceenroller /c /EnrollMmpc`; needs SYSTEM, prompts first), `-EventLookbackHours`.
 
 See the [troubleshooting README](./scripts/troubleshooting/README.md) for the full check list, output interpretation, deployment-as-remediation notes, and future enhancements.
+
+### [CIS Chrome Catalog](./tools/cis-chrome-catalog/)
+Builds an Intune Settings Catalog policy for the **CIS Google Chrome Benchmark** (L1 by default) from the CIS Build Kit GPO backup (`registry.pol`) and the CIS workbook. It maps each Chrome registry value to exactly one `chromeintune*` setting definition from Graph beta, and builds the instance from the definition's structure (boolean, enum, integer, string, list).
+
+Output is `policy.json` plus `coverage.md`, which gives every L1 recommendation a status: Mapped / NoDefinition / Ambiguous / UnsupportedShape / Conflict / NotInGpo / OutOfScope. The default is a dry run. `-Create` POSTs the policy unassigned, and `-CompareTo <policyId>` reports Missing / WrongValue / Extra. Includes an offline Pester suite with fixtures.
 
 ## IntuneToolkit Module
 Shared helpers under `modules/IntuneToolkit` provide:

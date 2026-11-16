@@ -1,0 +1,886 @@
+[
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas",
+    "name": "CertificateTransparencyEnforcementDisabledForCas",
+    "displayName": "Disable Certificate Transparency enforcement for a list of subjectPublicKeyInfo hashes",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/CertificateTransparencyEnforcementDisabledForCas",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": [
+          {
+            "dependedOnBy": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas_certificatetransparencyenforcementdisabledforcasdesc",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas_certificatetransparencyenforcementdisabledforcasdesc",
+    "name": "CertificateTransparencyEnforcementDisabledForCasDesc",
+    "displayName": "Disable Certificate Transparency enforcement for a list of subjectPublicKeyInfo hashes (Device)",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/CertificateTransparencyEnforcementDisabledForCas",
+    "valueDefinition": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValueDefinition",
+      "maximumLength": 2048,
+      "minimumLength": 0
+    },
+    "maximumCount": 1000,
+    "minimumCount": 1,
+    "dependentOn": [
+      {
+        "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas_1",
+        "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_certificatetransparencyenforcementdisabledforcas"
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize",
+    "name": "DiskCacheSize",
+    "displayName": "Set disk cache size in bytes",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/DiskCacheSize",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": [
+          {
+            "dependedOnBy": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize_diskcachesize",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize_diskcachesize",
+    "name": "DiskCacheSize",
+    "displayName": "Set disk cache size: (Device)",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/DiskCacheSize",
+    "valueDefinition": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValueDefinition",
+      "maximumValue": 2000000000,
+      "minimumValue": 0
+    },
+    "dependentOn": [
+      {
+        "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize_1",
+        "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_diskcachesize"
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions",
+    "name": "DownloadRestrictions",
+    "displayName": "Allow download restrictions",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/DownloadRestrictions",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": [
+          {
+            "dependedOnBy": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions",
+    "name": "DownloadRestrictions",
+    "displayName": "Download restrictions (Device)",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/DownloadRestrictions",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions_0",
+        "name": "No special restrictions. Default.",
+        "displayName": "No special restrictions. Default.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "0"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions_1",
+        "name": "Block malicious downloads and dangerous file types.",
+        "displayName": "Block malicious downloads and dangerous file types.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "1"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions_2",
+        "name": "Block malicious downloads, uncommon or unwanted downloads and dangerous file types.",
+        "displayName": "Block malicious downloads, uncommon or unwanted downloads and dangerous file types.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "2"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions_3",
+        "name": "Block all downloads.",
+        "displayName": "Block all downloads.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "3"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_downloadrestrictions_4",
+        "name": "Block malicious downloads. Recommended.",
+        "displayName": "Block malicious downloads. Recommended.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "4"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_downloadrestrictions"
+          }
+        ],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings",
+    "name": "ProxySettings",
+    "displayName": "Proxy settings",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/ProxySettings",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": [
+          {
+            "dependedOnBy": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings_proxysettings",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings_proxysettings",
+    "name": "ProxySettings",
+    "displayName": "Proxy settings (Device)",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/ProxySettings",
+    "valueDefinition": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValueDefinition",
+      "maximumLength": 1000000,
+      "minimumLength": 0
+    },
+    "dependentOn": [
+      {
+        "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings_1",
+        "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_proxysettings"
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended",
+    "name": "DownloadRestrictions_recommended",
+    "displayName": "Allow download restrictions",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome_recommended/DownloadRestrictions_recommended",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": [
+          {
+            "dependedOnBy": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions",
+    "name": "DownloadRestrictions",
+    "displayName": "Download restrictions (Device)",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome_recommended/DownloadRestrictions_recommended",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions_0",
+        "name": "No special restrictions. Default.",
+        "displayName": "No special restrictions. Default.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "0"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions_1",
+        "name": "Block malicious downloads and dangerous file types.",
+        "displayName": "Block malicious downloads and dangerous file types.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "1"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions_2",
+        "name": "Block malicious downloads, uncommon or unwanted downloads and dangerous file types.",
+        "displayName": "Block malicious downloads, uncommon or unwanted downloads and dangerous file types.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "2"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions_3",
+        "name": "Block all downloads.",
+        "displayName": "Block all downloads.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "3"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended"
+          }
+        ],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_downloadrestrictions_4",
+        "name": "Block malicious downloads. Recommended.",
+        "displayName": "Block malicious downloads. Recommended.",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValue",
+          "settingValueTemplateReference": null,
+          "value": "4"
+        },
+        "dependentOn": [
+          {
+            "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended_1",
+            "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_downloadrestrictions_recommended"
+          }
+        ],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled",
+    "name": "SyncDisabled",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist",
+    "name": "ExtensionInstallBlocklist",
+    "displayName": "Configure extension installation blocklist",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome~Extensions/ExtensionInstallBlocklist",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": [
+          {
+            "dependedOnBy": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_extensioninstallblocklistdesc",
+            "required": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_fixture": "real (trimmed)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_extensioninstallblocklistdesc",
+    "name": "ExtensionInstallBlocklistDesc",
+    "displayName": "Extension IDs the user should be prevented from installing (or * for all) (Device)",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome~Extensions/ExtensionInstallBlocklist",
+    "valueDefinition": {
+      "@odata.type": "#microsoft.graph.deviceManagementConfigurationStringSettingValueDefinition",
+      "maximumLength": 2048,
+      "minimumLength": 0
+    },
+    "maximumCount": 1000,
+    "minimumCount": 1,
+    "dependentOn": [
+      {
+        "dependentOn": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist_1",
+        "parentSettingId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~extensions_extensioninstallblocklist"
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: boolean shape cloned from syncdisabled (Disabled case)",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_remotedebuggingallowed",
+    "name": "RemoteDebuggingAllowed",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_remotedebuggingallowed",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_remotedebuggingallowed_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_remotedebuggingallowed_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_remotedebuggingallowed_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: boolean definition fed a DWORD of 7 -> UnsupportedShape",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_unsupportedvaluepolicy",
+    "name": "UnsupportedValuePolicy",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_unsupportedvaluepolicy",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_unsupportedvaluepolicy_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_unsupportedvaluepolicy_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_unsupportedvaluepolicy_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: boolean where CIS remediation contradicts registry.pol",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_conflictpolicy",
+    "name": "ConflictPolicy",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_conflictpolicy",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_conflictpolicy_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_conflictpolicy_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_conflictpolicy_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: mandatory twin for a CIS Recommended value",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_originkeyedprocessesenabled",
+    "name": "OriginKeyedProcessesEnabled",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_originkeyedprocessesenabled",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_originkeyedprocessesenabled_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_originkeyedprocessesenabled_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_originkeyedprocessesenabled_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: same policy in two categories -> Ambiguous",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categorya_ambigpolicy",
+    "name": "AmbigPolicy",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categorya_ambigpolicy",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categorya_ambigpolicy_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categorya_ambigpolicy_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categorya_ambigpolicy_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: same policy in two categories -> Ambiguous",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categoryb_ambigpolicy",
+    "name": "AmbigPolicy",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categoryb_ambigpolicy",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categoryb_ambigpolicy_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categoryb_ambigpolicy_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome~categoryb_ambigpolicy_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: policy only in the chromeintunev141 namespace",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev141~policy~googlechrome_translatorapiallowed",
+    "name": "TranslatorAPIAllowed",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev141~policy~googlechrome_translatorapiallowed",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev141~policy~googlechrome_translatorapiallowed_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev141~policy~googlechrome_translatorapiallowed_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev141~policy~googlechrome_translatorapiallowed_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: user-scope twin, must be ignored",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled",
+    "name": "SyncDisabled",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled_0",
+    "options": [
+      {
+        "itemId": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "user_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_syncdisabled_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  },
+  {
+    "_fixture": "synthetic: recommended variant, must be ignored",
+    "@odata.type": "#microsoft.graph.deviceManagementConfigurationChoiceSettingDefinition",
+    "id": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_originkeyedprocessesenabled_recommended",
+    "name": "OriginKeyedProcessesEnabled",
+    "displayName": "Disable synchronization of data with Google",
+    "rootDefinitionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_originkeyedprocessesenabled_recommended",
+    "offsetUri": "/Config/chromeIntuneV1~Policy~googlechrome/SyncDisabled",
+    "defaultOptionId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_originkeyedprocessesenabled_recommended_0",
+    "options": [
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_originkeyedprocessesenabled_recommended_0",
+        "name": "Disabled",
+        "displayName": "Disabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 0
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      },
+      {
+        "itemId": "device_vendor_msft_policy_config_chromeintunev1~policy~googlechrome_recommended_originkeyedprocessesenabled_recommended_1",
+        "name": "Enabled",
+        "displayName": "Enabled",
+        "optionValue": {
+          "@odata.type": "#microsoft.graph.deviceManagementConfigurationIntegerSettingValue",
+          "settingValueTemplateReference": null,
+          "value": 1
+        },
+        "dependentOn": [],
+        "dependedOnBy": []
+      }
+    ]
+  }
+]

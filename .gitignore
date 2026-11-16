@@ -38,3 +38,6 @@
 # Azurite local storage emulator state
 /AzuriteConfig
 /__azurite_db_*.json
+
+# CIS Chrome catalog tool output (policy.json, coverage.md, definitions cache)
+cis-chrome-catalog-out/

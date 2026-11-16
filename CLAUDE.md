@@ -70,6 +70,7 @@ Scripts use the IntuneToolkit module's permission presets:
 - **language-packs/**: Per-language Win32 apps for installing language packs during Autopilot (13 languages, each with install + detection script)
 - **proactive-remediations/**: Intune Proactive Remediation packages (detection + remediation scripts)
 - **troubleshooting/**: Deep device diagnostics with progressive detail levels, plus `Invoke-MmpcDiagnostics.ps1` for MMP-C / linked (dual) enrollment health (EPM/WinDC channel) — self-contained, runs locally, no Graph/module dependency
+- **tools/cis-chrome-catalog/** (PowerShell 7): CIS Google Chrome Benchmark → Intune Settings Catalog policy builder (dry run by default, `-Create`, `-CompareTo`). Pure logic lives in `CisChromeCatalog.psm1`; Graph calls are thin wrappers. Tests: `Invoke-Pester .\tools\cis-chrome-catalog\tests` (offline, fixtures in `tests/fixtures`)
 
 ### Azure Functions
 The `function-apps/app-dependency-manager/` contains a timer-triggered Azure Function that:
